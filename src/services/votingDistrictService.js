@@ -35,7 +35,7 @@ class VotingDistrictService {
     this.isLoading = true;
 
     try {
-      const response = await fetch('/korzetek.csv');
+      const response = await fetch('/minerva/korzetek.csv');
       if (!response.ok) {
         throw new Error('Nem sikerült betölteni a választási adatbázist');
       }
