@@ -16,7 +16,7 @@ function App() {
     <VotingDistrictProvider>
       <AuthProvider>
         <ToastProvider>
-          <BrowserRouter>
+          <BrowserRouter basename="/minerva">
             <Routes>
         {/* Public routes */}
         <Route path="/login" element={<Login />} />
