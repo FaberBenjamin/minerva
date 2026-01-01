@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Minerva - Átirányítás</title>
+    <script>
+      // GitHub Pages SPA routing fix
+      // Amikor a user egy aloldalt (pl. /register) frissít vagy közvetlenül megnyit,
+      // GitHub Pages 404-et ad. Ez a script átirányítja index.html-re a megfelelő route-tal.
+      var pathSegments = window.location.pathname.slice(1).split('/').filter(Boolean);
+      var repoName = window.location.pathname.split('/')[1];
+
+      // Ha van repo név az URL-ben (pl. github.io/minerva), mentsd el
+      var basePath = '';
+      if (repoName && !pathSegments.includes('404.html')) {
+        basePath = '/' + repoName;
+      }
+
+      // Átirányítás az index.html-re query paraméterként átadva az eredeti útvonalat
+      sessionStorage.setItem('redirectPath', window.location.pathname + window.location.search);
+      window.location.replace(basePath + '/');
+    </script>
+  </head>
+  <body>
+    <p>Átirányítás...</p>
+  </body>
+</html>
