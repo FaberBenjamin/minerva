@@ -32,10 +32,7 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
-    // All other collections
-    // - Only admins can access
-    match /{document=**} {
-      allow read, write: if isAdmin();
-    }
+    // Default deny all for other collections
+    // (No catch-all rule - everything else is denied by default)
   }
 }

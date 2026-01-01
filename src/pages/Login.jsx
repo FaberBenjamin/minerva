@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 function Login() {
   const [email, setEmail] = useState('');
@@ -6,17 +8,34 @@ function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const { login } = useAuth();
+  const navigate = useNavigate();
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
     try {
-      // TODO: Firebase Authentication implementálás (Fázis 2)
-      console.log('Login attempt:', { email });
-      alert('Firebase Authentication még nem lett implementálva. Ez a Fázis 2 feladata.');
+      await login(email, password);
+      navigate('/');
     } catch (err) {
-      setError(err.message);
+      console.error('Login error:', err);
+
+      // Felhasználóbarát hibaüzenetek
+      let errorMessage = 'Hiba történt a bejelentkezés során';
+
+      if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found') {
+        errorMessage = 'Hibás email cím vagy jelszó';
+      } else if (err.code === 'auth/too-many-requests') {
+        errorMessage = 'Túl sok sikertelen próbálkozás. Próbáld később.';
+      } else if (err.message === 'Nincs jogosultságod az admin felülethez') {
+        errorMessage = err.message;
+      } else if (err.code === 'auth/network-request-failed') {
+        errorMessage = 'Hálózati hiba. Ellenőrizd az internetkapcsolatot.';
+      }
+
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

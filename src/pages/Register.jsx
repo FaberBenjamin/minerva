@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { db } from '../services/firebase';
-import { collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -109,16 +109,8 @@ const Register = () => {
     setSubmitStatus(null);
 
     try {
-      // Check for duplicate email
+      // Volunteers collection referencia
       const volunteersRef = collection(db, 'volunteers');
-      const q = query(volunteersRef, where('email', '==', formData.email.toLowerCase()));
-      const querySnapshot = await getDocs(q);
-
-      if (!querySnapshot.empty) {
-        setErrors({ email: 'Ez az email cím már regisztrálva van' });
-        setIsSubmitting(false);
-        return;
-      }
 
       // Teljes cím összeállítása
       const fullAddress = `${formData.pir} ${formData.street} ${formData.streetType} ${formData.houseNumber}`;
@@ -162,6 +154,9 @@ const Register = () => {
 
     } catch (error) {
       console.error('Hiba a regisztráció során:', error);
+      console.error('Error code:', error.code);
+      console.error('Error message:', error.message);
+      console.error('Full error:', JSON.stringify(error, null, 2));
       setSubmitStatus('error');
     } finally {
       setIsSubmitting(false);

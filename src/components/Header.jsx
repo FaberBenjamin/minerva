@@ -1,12 +1,17 @@
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 function Header() {
   const navigate = useNavigate();
+  const { logout, userProfile } = useAuth();
 
-  const handleLogout = () => {
-    // TODO: Firebase Auth kijelentkezés (Fázis 2)
-    console.log('Logout');
-    navigate('/login');
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
   };
 
   return (
@@ -30,10 +35,21 @@ function Header() {
               >
                 Ismeretlen Körzetek
               </Link>
+              <Link
+                to="/invite-admin"
+                className="text-minerva-gray-700 hover:text-minerva-gray-900 transition-colors"
+              >
+                Admin meghívása
+              </Link>
             </nav>
           </div>
 
           <div className="flex items-center space-x-4">
+            {userProfile && (
+              <span className="text-sm text-minerva-gray-600">
+                {userProfile.name || userProfile.email}
+              </span>
+            )}
             <button
               onClick={handleLogout}
               className="px-4 py-2 text-sm text-minerva-gray-700 hover:text-minerva-gray-900 transition-colors"

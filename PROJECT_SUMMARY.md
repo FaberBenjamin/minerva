@@ -239,19 +239,22 @@ Vármegye kód;Vármegye;OEVK;Település kód;Település;TEVK;Szavazókör;Sza
 - [x] Firebase projekt létrehozás és konfiguráció
 - [x] Alapvető routing és layout
 
-### Fázis 2: Publikus Regisztrációs Form
-- [ ] Publikus route (`/register`) létrehozása
-- [ ] Regisztrációs űrlap UI (név, email, telefon, cím mezők)
-- [ ] Form validáció (kötelező mezők, formátum ellenőrzés)
-- [ ] Firestore integráció (volunteers collection-be írás)
-- [ ] Sikeres/hiba visszajelzés UI
+### Fázis 2: Publikus Regisztrációs Form ✅
+- [x] Publikus route (`/register`) létrehozása
+- [x] Regisztrációs űrlap UI (név, email, telefon, cím mezők)
+- [x] Form validáció (kötelező mezők, formátum ellenőrzés)
+- [x] Firestore integráció (volunteers collection-be írás)
+- [x] Sikeres/hiba visszajelzés UI
+- [x] Firestore Security Rules beállítása
 - [ ] (Opcionális) reCAPTCHA v3 integráció
 
-### Fázis 3: Authentication
-- [ ] Firebase Auth integráció
-- [ ] Belépés/Kijelentkezés UI
-- [ ] Email meghívó generálás (manuális)
-- [ ] Protected routes (admin oldalak)
+### Fázis 3: Authentication ✅
+- [x] Firebase Auth integráció
+- [x] AuthContext létrehozása (globális auth state)
+- [x] Belépés/Kijelentkezés UI
+- [x] Email meghívó generálás (InviteAdmin oldal)
+- [x] Protected routes implementálás
+- [x] Admin ellenőrzés Firestore-ban (admin oldalak)
 
 ### Fázis 4: Adatbázis Integráció
 - [ ] XLSX adatbázis feldolgozó modul
@@ -329,5 +332,5 @@ REACT_APP_RECAPTCHA_SITE_KEY=
 ---
 
 **Utolsó frissítés:** 2026-01-01
-**Verzió:** 1.1
-**Státusz:** Fázis 1 kész, Fázis 2 következik (Publikus Regisztrációs Form)
+**Verzió:** 1.2
+**Státusz:** Fázis 1-3 kész, Fázis 4 következik (Adatbázis Integráció)
