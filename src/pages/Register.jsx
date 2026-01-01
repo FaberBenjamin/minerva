@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { db } from '../services/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { useVotingDistrict } from '../contexts/VotingDistrictContext';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -176,10 +177,9 @@ const Register = () => {
   if (districtLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
-        <div className="bg-white rounded-lg shadow-lg p-8 text-center">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">Betöltés...</h2>
-          <p className="text-gray-600">A választási adatbázis betöltése folyamatban van.</p>
-          <p className="text-gray-500 text-sm mt-2">Ez néhány másodpercet vehet igénybe.</p>
+        <div className="bg-white rounded-lg shadow-lg p-8">
+          <LoadingSpinner text="A választási adatbázis betöltése folyamatban van..." />
+          <p className="text-gray-500 text-sm mt-4 text-center">Ez néhány másodpercet vehet igénybe.</p>
         </div>
       </div>
     );

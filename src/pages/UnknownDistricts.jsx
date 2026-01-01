@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { db } from '../services/firebase';
 import { collection, getDocs, query, where, doc, updateDoc } from 'firebase/firestore';
+import { useToast } from '../contexts/ToastContext';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 function UnknownDistricts() {
   const [unknownVolunteers, setUnknownVolunteers] = useState([]);
@@ -12,6 +14,7 @@ function UnknownDistricts() {
     votingStation: ''
   });
   const [saving, setSaving] = useState(false);
+  const { showToast } = useToast();
 
   useEffect(() => {
     loadUnknownVolunteers();
@@ -58,7 +61,7 @@ function UnknownDistricts() {
 
   const handleSave = async () => {
     if (!editForm.oevk || !editForm.votingStation) {
-      alert('Kérlek add meg az OEVK-t és a szavazókört!');
+      showToast('Kérlek add meg az OEVK-t és a szavazókört!', 'warning');
       return;
     }
 
@@ -78,21 +81,17 @@ function UnknownDistricts() {
       // Modal bezárása
       handleCancelEdit();
 
-      alert('Sikeres mentés! Az önkéntes átkerült a szavazókörök közé.');
+      showToast('Sikeres mentés! Az önkéntes átkerült a szavazókörök közé.', 'success');
     } catch (err) {
       console.error('Hiba a mentés során:', err);
-      alert('Hiba történt a mentés során');
+      showToast('Hiba történt a mentés során', 'error');
     } finally {
       setSaving(false);
     }
   };
 
   if (loading) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-gray-600">Betöltés...</p>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   if (error) {

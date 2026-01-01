@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { db } from '../services/firebase';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { exportVolunteersByOEVK, exportAllByOEVK } from '../services/exportService';
+import { useToast } from '../contexts/ToastContext';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 function Dashboard() {
   const [votingStations, setVotingStations] = useState([]);
@@ -14,6 +16,7 @@ function Dashboard() {
   const [exportProgress, setExportProgress] = useState(null);
 
   const navigate = useNavigate();
+  const { showToast } = useToast();
 
   useEffect(() => {
     const loadVolunteers = async () => {
@@ -96,9 +99,9 @@ function Dashboard() {
     try {
       setExporting(true);
       const result = await exportVolunteersByOEVK(allVolunteers, oevk);
-      alert(`Sikeres export! ${result.count} önkéntes exportálva.`);
+      showToast(`Sikeres export! ${result.count} önkéntes exportálva.`, 'success');
     } catch (error) {
-      alert(`Hiba az exportálás során: ${error.message}`);
+      showToast(`Hiba az exportálás során: ${error.message}`, 'error');
     } finally {
       setExporting(false);
     }
@@ -121,7 +124,7 @@ function Dashboard() {
     const oevkList = Object.keys(groupedByOEVK).sort();
 
     if (oevkList.length === 0) {
-      alert('Nincsenek matched státuszú önkéntesek az exportáláshoz');
+      showToast('Nincsenek matched státuszú önkéntesek az exportáláshoz', 'warning');
       return;
     }
 
@@ -145,22 +148,18 @@ function Dashboard() {
       }
 
       setExportProgress(null);
-      alert(`Sikeres export! ${oevkList.length} OEVK exportálva külön fájlokba.`);
+      showToast(`Sikeres export! ${oevkList.length} OEVK exportálva külön fájlokba.`, 'success');
     } catch (error) {
       console.error('Export hiba:', error);
       setExportProgress(null);
-      alert(`Hiba az exportálás során: ${error.message}`);
+      showToast(`Hiba az exportálás során: ${error.message}`, 'error');
     } finally {
       setExporting(false);
     }
   };
 
   if (loading) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-gray-600">Betöltés...</p>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   if (error) {
@@ -174,11 +173,11 @@ function Dashboard() {
   return (
     <div>
       <div className="mb-6">
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-4">
           <h1 className="text-2xl font-bold text-minerva-gray-900">Szavazókörök</h1>
 
           {votingStations.length > 0 && (
-            <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
               {exportProgress && (
                 <span className="text-sm text-gray-600 font-medium">
                   {exportProgress}
@@ -187,7 +186,7 @@ function Dashboard() {
               <button
                 onClick={handleExportAll}
                 disabled={exporting}
-                className={`px-4 py-2 rounded-md font-medium text-white ${
+                className={`w-full sm:w-auto px-4 py-2 rounded-md font-medium text-white text-sm ${
                   exporting
                     ? 'bg-gray-400 cursor-not-allowed'
                     : 'bg-green-600 hover:bg-green-700'

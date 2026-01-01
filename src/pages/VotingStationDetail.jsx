@@ -2,6 +2,7 @@ import { useParams, Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { db } from '../services/firebase';
 import { collection, getDocs, query, where } from 'firebase/firestore';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 function VotingStationDetail() {
   const { id } = useParams();
@@ -50,11 +51,7 @@ function VotingStationDetail() {
   }, [oevk, votingStation]);
 
   if (loading) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-gray-600">Betöltés...</p>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   if (error) {
