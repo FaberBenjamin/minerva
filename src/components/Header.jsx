@@ -21,9 +21,12 @@ function Header() {
       <div className="container mx-auto px-4 py-4 max-w-7xl">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-8">
-            <Link to="/" className="text-xl font-bold text-minerva-gray-900">
-              Minerva
-            </Link>
+            <div className="flex items-center gap-2">
+              <Link to="/" className="text-xl font-bold text-minerva-gray-900">
+                Minerva
+              </Link>
+              <span className="text-xs text-minerva-gray-500">v1.0</span>
+            </div>
             <nav className="hidden md:flex space-x-6">
               <Link
                 to="/"
