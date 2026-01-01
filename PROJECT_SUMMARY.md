@@ -256,26 +256,65 @@ Vármegye kód;Vármegye;OEVK;Település kód;Település;TEVK;Szavazókör;Sza
 - [x] Protected routes implementálás
 - [x] Admin ellenőrzés Firestore-ban (admin oldalak)
 
-### Fázis 4: Adatbázis Integráció
-- [ ] XLSX adatbázis feldolgozó modul
-- [ ] Cím egyeztetési algoritmus implementálás
-- [ ] Firestore adatmodell setup
-- [ ] Választási adatbázis import logika
+### Fázis 4: Adatbázis Integráció ✅
+- [x] CSV adatbázis (korzetek.csv) public mappába helyezése
+- [x] CSV parser library (papaparse) telepítése
+- [x] VotingDistrictService létrehozása (CSV betöltés + PIR indexelés)
+- [x] Cím egyeztetési algoritmus implementálása
+  - PIR alapú szűrés
+  - Közterület név normalizálás (ékezet-toleráns)
+  - Közterület jelleg egyeztetés
+  - Házszám normalizálás (leading zeros kezelése)
+- [x] VotingDistrictContext létrehozása (globális hozzáférés)
+- [x] Register.jsx integrálás real-time cím egyeztetéssel
+- [x] Loading state a CSV betöltéséhez
 
-### Fázis 5: Admin UI - Főnézetek
-- [ ] Szavazókörök lista (keresés, szűrés)
-- [ ] Szavazókör részletes nézet
-- [ ] Önkéntesek listája szavazókörönként
+### Fázis 5: Admin UI - Főnézetek ✅
+- [x] Dashboard.jsx - Szavazókörök lista
+  - Firestore lekérdezés (matched státuszú volunteers)
+  - Csoportosítás OEVK + Szavazókör szerint
+  - Önkéntesek számának megjelenítése
+  - Keresés OEVK/Szavazókör szerint
+  - Rendezés OEVK, majd szavazókör szerint
+- [x] VotingStationDetail.jsx - Szavazókör részletes nézet
+  - Adott szavazókör összes önkéntese
+  - Rendezés név szerint (magyar ábécérend)
+  - Megjelenítés: név, email, telefon, teljes cím
+  - Vissza gomb a főoldalra
 
-### Fázis 6: Admin UI - Kezelés
-- [ ] Ismeretlen körzetek lista
-- [ ] Manuális szerkesztés funkcionalitás
-- [ ] Státusz frissítés
+### Fázis 6: Admin UI - Ismeretlen körzetek kezelése ✅
+- [x] UnknownDistricts.jsx - Ismeretlen körzetek lista
+  - Firestore lekérdezés (unknown státuszú volunteers)
+  - Rendezés név szerint
+  - Táblázatos megjelenítés (név, email, telefon, cím)
+- [x] Szerkesztés modal
+  - OEVK és szavazókör manuális megadása
+  - Önkéntes adatainak megjelenítése
+  - Validáció (kötelező mezők)
+- [x] Manuális hozzárendelés
+  - Firestore update (OEVK, szavazókör)
+  - Státusz frissítés (unknown → matched)
+  - Automatikus lista újratöltés mentés után
+  - Sikeres mentés visszajelzés
 
-### Fázis 7: Export Funkció
-- [ ] OEVK szerinti csoportosítás
-- [ ] Excel fájl generálás
-- [ ] Letöltési mechanizmus
+### Fázis 7: Export Funkció ✅
+- [x] exportService.js létrehozása
+  - exportVolunteersByOEVK() - Egy OEVK exportálása
+  - exportAllByOEVK() - Összes OEVK exportálása külön fájlokba
+- [x] Excel generálás ExcelJS-sel
+  - Munkalap létrehozása (OEVK név)
+  - Oszlopok: Név, Email, Telefonszám, Teljes cím, OEVK, Szavazókör
+  - Header formázás (bold, háttérszín)
+  - Zebra csíkok (páros sorok)
+- [x] OEVK szerinti szűrés és csoportosítás
+- [x] Letöltési mechanizmus
+  - Blob generálás
+  - Automatikus letöltés trigger
+  - Fájlnév: `OEVK_{oevk}_onkentesek.xlsx`
+- [x] Dashboard UI
+  - "Összes OEVK exportálása" gomb (felül)
+  - "Export" gomb minden szavazókör sorban (OEVK-nként)
+  - Exporting állapot kezelés (gombok tiltása)
 
 ### Fázis 8: Polish & Testing
 - [ ] Design finomítás (szürke árnyalatok)
@@ -332,5 +371,5 @@ REACT_APP_RECAPTCHA_SITE_KEY=
 ---
 
 **Utolsó frissítés:** 2026-01-01
-**Verzió:** 1.2
-**Státusz:** Fázis 1-3 kész, Fázis 4 következik (Adatbázis Integráció)
+**Verzió:** 1.6
+**Státusz:** Fázis 1-7 kész, Fázis 8 következik (Polish & Testing)

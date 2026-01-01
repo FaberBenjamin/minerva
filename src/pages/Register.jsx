@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { db } from '../services/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { useVotingDistrict } from '../contexts/VotingDistrictContext';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -16,6 +17,8 @@ const Register = () => {
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState(null); // 'success' | 'error' | null
+
+  const { findDistrict, isReady, isLoading: districtLoading } = useVotingDistrict();
 
   // Közterület jellegek
   const streetTypes = [
@@ -115,8 +118,14 @@ const Register = () => {
       // Teljes cím összeállítása
       const fullAddress = `${formData.pir} ${formData.street} ${formData.streetType} ${formData.houseNumber}`;
 
-      // TODO: Itt később lesz a cím egyeztetési algoritmus
-      // Egyelőre mindent 'unknown' státuszba rakunk
+      // Cím egyeztetés a választási adatbázisban
+      const districtMatch = findDistrict({
+        pir: formData.pir,
+        street: formData.street,
+        streetType: formData.streetType,
+        houseNumber: formData.houseNumber
+      });
+
       const volunteerData = {
         name: formData.name.trim(),
         email: formData.email.toLowerCase().trim(),
@@ -128,7 +137,7 @@ const Register = () => {
           houseNumber: formData.houseNumber.trim(),
           fullAddress: fullAddress,
         },
-        district: {
+        district: districtMatch || {
           oevk: null,
           votingStation: null,
           status: 'unknown', // 'matched' | 'unknown'
@@ -162,6 +171,19 @@ const Register = () => {
       setIsSubmitting(false);
     }
   };
+
+  // Ha még töltődik a választási adatbázis
+  if (districtLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
+        <div className="bg-white rounded-lg shadow-lg p-8 text-center">
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">Betöltés...</h2>
+          <p className="text-gray-600">A választási adatbázis betöltése folyamatban van.</p>
+          <p className="text-gray-500 text-sm mt-2">Ez néhány másodpercet vehet igénybe.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">

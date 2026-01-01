@@ -1,14 +1,203 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { db } from '../services/firebase';
+import { collection, getDocs, query, where } from 'firebase/firestore';
+import { exportVolunteersByOEVK, exportAllByOEVK } from '../services/exportService';
 
 function Dashboard() {
-  // TODO: Firebase Firestore adatok betöltése (Fázis 5)
   const [votingStations, setVotingStations] = useState([]);
+  const [allVolunteers, setAllVolunteers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [exporting, setExporting] = useState(false);
+  const [exportProgress, setExportProgress] = useState(null);
+
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const loadVolunteers = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Lekérjük az összes volunteers-t akiknek van OEVK-ja (matched státusz)
+        const volunteersRef = collection(db, 'volunteers');
+        const q = query(volunteersRef, where('district.status', '==', 'matched'));
+        const querySnapshot = await getDocs(q);
+
+        // Összegyűjtjük az összes volunteers-t exporthoz
+        const volunteersData = [];
+        querySnapshot.forEach((doc) => {
+          volunteersData.push({ id: doc.id, ...doc.data() });
+        });
+        setAllVolunteers(volunteersData);
+
+        // Csoportosítás OEVK + Szavazókör szerint
+        const grouped = new Map();
+
+        volunteersData.forEach((volunteer) => {
+          const { oevk, votingStation } = volunteer.district;
+
+          if (!oevk || !votingStation) return;
+
+          const key = `${oevk}-${votingStation}`;
+
+          if (!grouped.has(key)) {
+            grouped.set(key, {
+              oevk,
+              votingStation,
+              count: 0,
+              volunteers: []
+            });
+          }
+
+          grouped.get(key).count++;
+          grouped.get(key).volunteers.push(volunteer);
+        });
+
+        // Map -> Array konverzió, rendezés OEVK majd szavazókör szerint
+        const votingStationsArray = Array.from(grouped.values()).sort((a, b) => {
+          if (a.oevk !== b.oevk) {
+            return a.oevk.localeCompare(b.oevk);
+          }
+          return a.votingStation.localeCompare(b.votingStation);
+        });
+
+        setVotingStations(votingStationsArray);
+      } catch (err) {
+        console.error('Hiba a szavazókörök betöltésekor:', err);
+        setError('Nem sikerült betölteni a szavazóköröket');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadVolunteers();
+  }, []);
+
+  // Szűrés keresési szöveg alapján
+  const filteredStations = votingStations.filter((station) => {
+    if (!searchTerm) return true;
+
+    const search = searchTerm.toLowerCase();
+    return (
+      station.oevk.toLowerCase().includes(search) ||
+      station.votingStation.toLowerCase().includes(search)
+    );
+  });
+
+  const handleViewDetails = (oevk, votingStation) => {
+    navigate(`/station/${oevk}-${votingStation}`);
+  };
+
+  const handleExportOEVK = async (oevk, e) => {
+    e.stopPropagation();
+    try {
+      setExporting(true);
+      const result = await exportVolunteersByOEVK(allVolunteers, oevk);
+      alert(`Sikeres export! ${result.count} önkéntes exportálva.`);
+    } catch (error) {
+      alert(`Hiba az exportálás során: ${error.message}`);
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleExportAll = async () => {
+    // OEVK-k csoportosítása
+    const groupedByOEVK = allVolunteers.reduce((acc, volunteer) => {
+      if (volunteer.district.status !== 'matched' || !volunteer.district.oevk) {
+        return acc;
+      }
+      const oevk = volunteer.district.oevk;
+      if (!acc[oevk]) {
+        acc[oevk] = [];
+      }
+      acc[oevk].push(volunteer);
+      return acc;
+    }, {});
+
+    const oevkList = Object.keys(groupedByOEVK).sort();
+
+    if (oevkList.length === 0) {
+      alert('Nincsenek matched státuszú önkéntesek az exportáláshoz');
+      return;
+    }
+
+    if (!window.confirm(`${oevkList.length} OEVK-t exportálsz külön fájlokba (${oevkList.join(', ')}). Folytatod?`)) {
+      return;
+    }
+
+    try {
+      setExporting(true);
+
+      for (let i = 0; i < oevkList.length; i++) {
+        const oevk = oevkList[i];
+        setExportProgress(`Exportálás: ${i + 1}/${oevkList.length} - OEVK ${oevk}`);
+
+        await exportVolunteersByOEVK(allVolunteers, oevk);
+
+        // 1 másodperc késleltetés a böngésző blokkolás elkerülésére
+        if (i < oevkList.length - 1) {
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+        }
+      }
+
+      setExportProgress(null);
+      alert(`Sikeres export! ${oevkList.length} OEVK exportálva külön fájlokba.`);
+    } catch (error) {
+      console.error('Export hiba:', error);
+      setExportProgress(null);
+      alert(`Hiba az exportálás során: ${error.message}`);
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-gray-600">Betöltés...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-red-600">{error}</p>
+      </div>
+    );
+  }
 
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-minerva-gray-900 mb-4">Szavazókörök</h1>
+        <div className="flex justify-between items-center mb-4">
+          <h1 className="text-2xl font-bold text-minerva-gray-900">Szavazókörök</h1>
+
+          {votingStations.length > 0 && (
+            <div className="flex items-center gap-4">
+              {exportProgress && (
+                <span className="text-sm text-gray-600 font-medium">
+                  {exportProgress}
+                </span>
+              )}
+              <button
+                onClick={handleExportAll}
+                disabled={exporting}
+                className={`px-4 py-2 rounded-md font-medium text-white ${
+                  exporting
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-green-600 hover:bg-green-700'
+                }`}
+              >
+                {exporting ? 'Exportálás...' : 'Összes OEVK exportálása'}
+              </button>
+            </div>
+          )}
+        </div>
 
         <div className="mb-4">
           <input
@@ -24,8 +213,12 @@ function Dashboard() {
       <div className="bg-white rounded-lg shadow">
         {votingStations.length === 0 ? (
           <div className="p-8 text-center text-minerva-gray-600">
-            <p>Még nincsenek szavazókörök az adatbázisban.</p>
-            <p className="text-sm mt-2">Az adatok a Google Sheets szinkronizálás után jelennek meg itt.</p>
+            <p>Még nincsenek regisztrált önkéntesek hozzárendelt szavazókörrel.</p>
+            <p className="text-sm mt-2">Az önkéntesek a /register oldalon tudnak regisztrálni.</p>
+          </div>
+        ) : filteredStations.length === 0 ? (
+          <div className="p-8 text-center text-minerva-gray-600">
+            <p>Nincs találat a keresési feltételeknek.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -33,10 +226,10 @@ function Dashboard() {
               <thead className="bg-minerva-gray-100 border-b border-minerva-gray-200">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-minerva-gray-700 uppercase tracking-wider">
-                    Szavazókör
+                    OEVK
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-minerva-gray-700 uppercase tracking-wider">
-                    OEVK
+                    Szavazókör
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-minerva-gray-700 uppercase tracking-wider">
                     Önkéntesek száma
@@ -47,7 +240,44 @@ function Dashboard() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-minerva-gray-200">
-                {/* TODO: Szavazókörök listázása */}
+                {filteredStations.map((station) => (
+                  <tr
+                    key={`${station.oevk}-${station.votingStation}`}
+                    className="hover:bg-gray-50 cursor-pointer"
+                    onClick={() => handleViewDetails(station.oevk, station.votingStation)}
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {station.oevk}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                      {station.votingStation}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                      {station.count}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <div className="flex gap-2 justify-end">
+                        <button
+                          onClick={(e) => handleExportOEVK(station.oevk, e)}
+                          disabled={exporting}
+                          className="text-green-600 hover:text-green-900 disabled:text-gray-400"
+                          title={`Export OEVK ${station.oevk}`}
+                        >
+                          📥 Export
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleViewDetails(station.oevk, station.votingStation);
+                          }}
+                          className="text-gray-600 hover:text-gray-900"
+                        >
+                          Megtekintés →
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
