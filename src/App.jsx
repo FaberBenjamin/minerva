@@ -1,6 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
-import { VotingDistrictProvider } from './contexts/VotingDistrictContext';
 import { ToastProvider } from './contexts/ToastContext';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -13,11 +12,10 @@ import InviteAdmin from './pages/InviteAdmin';
 
 function App() {
   return (
-    <VotingDistrictProvider>
-      <AuthProvider>
-        <ToastProvider>
-          <BrowserRouter basename="/minerva">
-            <Routes>
+    <AuthProvider>
+      <ToastProvider>
+        <BrowserRouter basename="/minerva">
+          <Routes>
         {/* Public routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
@@ -43,7 +41,6 @@ function App() {
           </BrowserRouter>
         </ToastProvider>
       </AuthProvider>
-    </VotingDistrictProvider>
   );
 }
 

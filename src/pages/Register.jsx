@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { db } from '../services/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { useVotingDistrict } from '../contexts/VotingDistrictContext';
+import { useVotingDistrict, VotingDistrictProvider } from '../contexts/VotingDistrictContext';
 import LoadingSpinner from '../components/LoadingSpinner';
 
-const Register = () => {
+const RegisterForm = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -380,6 +380,16 @@ const Register = () => {
         </div>
       </div>
     </div>
+  );
+};
+
+// Wrapper komponens VotingDistrictProvider-rel
+// Így a CSV csak akkor töltődik be amikor a Register oldal megnyílik
+const Register = () => {
+  return (
+    <VotingDistrictProvider>
+      <RegisterForm />
+    </VotingDistrictProvider>
   );
 };
 
