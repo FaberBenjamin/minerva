@@ -257,17 +257,22 @@ Vármegye kód;Vármegye;OEVK;Település kód;Település;TEVK;Szavazókör;Sza
 - [x] Admin ellenőrzés Firestore-ban (admin oldalak)
 
 ### Fázis 4: Adatbázis Integráció ✅
-- [x] CSV adatbázis (korzetek.csv) public mappába helyezése
-- [x] CSV parser library (papaparse) telepítése
-- [x] VotingDistrictService létrehozása (CSV betöltés + PIR indexelés)
+- [x] Választási adatbázis PIR-alapú JSON fájlokra felosztása
+  - 3105 különböző PIR (irányítószám)
+  - Átlagos fájlméret: 165 KB (vs 492 MB CSV)
+  - Script létrehozása: `scripts/split-csv-by-pir.js`
+- [x] VotingDistrictService létrehozása (dinamikus PIR betöltés)
+  - Lazy loading: csak az adott PIR töltődik be
+  - Cache-elés ismételt regisztrációknál
+  - Nincs globális CSV betöltés többé
 - [x] Cím egyeztetési algoritmus implementálása
-  - PIR alapú szűrés
+  - PIR alapú szűrés (on-demand letöltés)
   - Közterület név normalizálás (ékezet-toleráns)
   - Közterület jelleg egyeztetés
   - Házszám normalizálás (leading zeros kezelése)
-- [x] VotingDistrictContext létrehozása (globális hozzáférés)
-- [x] Register.jsx integrálás real-time cím egyeztetéssel
-- [x] Loading state a CSV betöltéséhez
+- [x] VotingDistrictContext létrehozása (wrapper funkcionalitás)
+- [x] Register.jsx integrálás async cím egyeztetéssel
+- [x] Instant betöltés (nincs 492 MB letöltés többé!)
 
 ### Fázis 5: Admin UI - Főnézetek ✅
 - [x] Dashboard.jsx - Szavazókörök lista
@@ -385,6 +390,6 @@ REACT_APP_RECAPTCHA_SITE_KEY=
 
 ---
 
-**Utolsó frissítés:** 2026-01-01
-**Verzió:** 1.7
-**Státusz:** Összes fázis kész (1-8), az alkalmazás production-ready
+**Utolsó frissítés:** 2026-01-02
+**Verzió:** 2.0
+**Státusz:** Összes fázis kész (1-8) + PIR-alapú optimalizálás, az alkalmazás production-ready

@@ -161,14 +161,14 @@ Mostantól **MINDEN alkalommal** amikor push-olsz a `main` branch-re:
 - Ellenőrizd a GitHub Secrets értékeket
 - Másold ki újra a Firebase Console-ból a helyes értékeket
 
-### ❌ CSV nem töltődik be
+### ❌ PIR adatok nem töltődnek be
 
-**Hiba:** "Választási adatbázis betöltése sikertelen"
+**Hiba:** "Nem sikerült betölteni a PIR adatokat" vagy 404 hiba
 
 **Megoldás:**
-- Ellenőrizd, hogy a `korzetek.csv` szerepel-e a `public/` mappában
-- Ellenőrizd, hogy Git LFS feltöltötte-e a fájlt GitHub-ra
-- Futtasd le: `git lfs ls-files` - látszódnia kell a CSV-nek
+- Ellenőrizd, hogy a `public/districts/` mappa létezik-e
+- Ellenőrizd, hogy vannak-e JSON fájlok benne (pl. `7624.json`)
+- A böngésző Console-ban (F12) nézd meg a pontos hibát
 
 ---
 
