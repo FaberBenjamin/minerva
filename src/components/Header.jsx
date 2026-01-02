@@ -25,7 +25,7 @@ function Header() {
               <Link to="/" className="text-xl font-bold text-minerva-gray-900">
                 Minerva
               </Link>
-              <span className="text-xs text-minerva-gray-500">v1.0</span>
+              <span className="text-xs text-minerva-gray-500">v2.0</span>
             </div>
             <nav className="hidden md:flex space-x-6">
               <Link
