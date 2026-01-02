@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { db } from '../services/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { useVotingDistrict, VotingDistrictProvider } from '../contexts/VotingDistrictContext';
-import LoadingSpinner from '../components/LoadingSpinner';
 
 const RegisterForm = () => {
   const [formData, setFormData] = useState({
@@ -19,7 +18,7 @@ const RegisterForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState(null); // 'success' | 'error' | null
 
-  const { findDistrict, isReady, isLoading: districtLoading } = useVotingDistrict();
+  const { findDistrict } = useVotingDistrict();
 
   // Közterület jellegek
   const streetTypes = [
@@ -119,8 +118,8 @@ const RegisterForm = () => {
       // Teljes cím összeállítása
       const fullAddress = `${formData.pir} ${formData.street} ${formData.streetType} ${formData.houseNumber}`;
 
-      // Cím egyeztetés a választási adatbázisban
-      const districtMatch = findDistrict({
+      // Cím egyeztetés a választási adatbázisban (dinamikusan tölti be a PIR adatokat)
+      const districtMatch = await findDistrict({
         pir: formData.pir,
         street: formData.street,
         streetType: formData.streetType,
@@ -172,18 +171,6 @@ const RegisterForm = () => {
       setIsSubmitting(false);
     }
   };
-
-  // Ha még töltődik a választási adatbázis
-  if (districtLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
-        <div className="bg-white rounded-lg shadow-lg p-8">
-          <LoadingSpinner text="A választási adatbázis betöltése folyamatban van..." />
-          <p className="text-gray-500 text-sm mt-4 text-center">Ez néhány másodpercet vehet igénybe.</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">

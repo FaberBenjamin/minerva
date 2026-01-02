@@ -1,98 +1,62 @@
-import Papa from 'papaparse';
-
 class VotingDistrictService {
   constructor() {
-    this.data = null;
-    this.indexedByPIR = new Map(); // PIR -> Array of addresses
-    this.isLoaded = false;
-    this.isLoading = false;
-    this.loadError = null;
+    this.pirCache = new Map(); // Cache a már letöltött PIR adatoknak
+    this.loadingPirs = new Map(); // Promise-ok a jelenleg töltődő PIR-ekhez
   }
 
   /**
-   * Betölti a korzetek.csv fájlt és indexeli PIR alapján
+   * Betölti az adott PIR JSON fájlt
+   * @param {string} pir - PIR / irányítószám
+   * @returns {Promise<Array>} - A PIR-hez tartozó címek tömbje
    */
-  async loadData() {
-    if (this.isLoaded) {
-      return this.data;
+  async loadPirData(pir) {
+    const cleanPir = pir?.trim();
+    if (!cleanPir) {
+      throw new Error('PIR megadása kötelező');
     }
 
-    if (this.isLoading) {
-      // Várunk amíg a betöltés befejeződik
-      return new Promise((resolve, reject) => {
-        const checkInterval = setInterval(() => {
-          if (this.isLoaded) {
-            clearInterval(checkInterval);
-            resolve(this.data);
-          } else if (this.loadError) {
-            clearInterval(checkInterval);
-            reject(this.loadError);
+    // Ha már cache-elve van
+    if (this.pirCache.has(cleanPir)) {
+      console.log(`✅ PIR ${cleanPir} cache-ből betöltve`);
+      return this.pirCache.get(cleanPir);
+    }
+
+    // Ha épp töltődik, várjuk meg
+    if (this.loadingPirs.has(cleanPir)) {
+      console.log(`⏳ PIR ${cleanPir} töltődik, várakozás...`);
+      return this.loadingPirs.get(cleanPir);
+    }
+
+    // Új betöltés indítása
+    const loadPromise = (async () => {
+      try {
+        console.log(`📥 PIR ${cleanPir} betöltése...`);
+        const response = await fetch(`/minerva/districts/${cleanPir}.json`);
+
+        if (!response.ok) {
+          if (response.status === 404) {
+            console.log(`❌ PIR ${cleanPir} nem található az adatbázisban`);
+            this.pirCache.set(cleanPir, []); // Üres tömb cache-elése
+            return [];
           }
-        }, 100);
-      });
-    }
+          throw new Error(`HTTP ${response.status}: Nem sikerült betölteni a PIR adatokat`);
+        }
 
-    this.isLoading = true;
+        const data = await response.json();
+        console.log(`✅ PIR ${cleanPir} betöltve: ${data.length} cím`);
 
-    try {
-      const response = await fetch('/minerva/korzetek.csv');
-      if (!response.ok) {
-        throw new Error('Nem sikerült betölteni a választási adatbázist');
+        this.pirCache.set(cleanPir, data);
+        return data;
+      } catch (error) {
+        console.error(`❌ Hiba PIR ${cleanPir} betöltése során:`, error);
+        throw error;
+      } finally {
+        this.loadingPirs.delete(cleanPir);
       }
+    })();
 
-      const csvText = await response.text();
-
-      return new Promise((resolve, reject) => {
-        Papa.parse(csvText, {
-          header: true,
-          delimiter: ';',
-          skipEmptyLines: true,
-          complete: (results) => {
-            try {
-              this.data = results.data;
-              this.indexData();
-              this.isLoaded = true;
-              this.isLoading = false;
-              console.log(`✅ Választási adatbázis betöltve: ${this.data.length} rekord`);
-              resolve(this.data);
-            } catch (error) {
-              this.loadError = error;
-              this.isLoading = false;
-              reject(error);
-            }
-          },
-          error: (error) => {
-            this.loadError = error;
-            this.isLoading = false;
-            reject(error);
-          }
-        });
-      });
-    } catch (error) {
-      this.loadError = error;
-      this.isLoading = false;
-      throw error;
-    }
-  }
-
-  /**
-   * Indexeli az adatokat PIR alapján gyorsabb kereséshez
-   */
-  indexData() {
-    this.indexedByPIR.clear();
-
-    this.data.forEach(record => {
-      const pir = record.PIR?.trim();
-      if (!pir) return;
-
-      if (!this.indexedByPIR.has(pir)) {
-        this.indexedByPIR.set(pir, []);
-      }
-
-      this.indexedByPIR.get(pir).push(record);
-    });
-
-    console.log(`📇 ${this.indexedByPIR.size} különböző PIR indexelve`);
+    this.loadingPirs.set(cleanPir, loadPromise);
+    return loadPromise;
   }
 
   /**
@@ -129,75 +93,76 @@ class VotingDistrictService {
   /**
    * Keresi a megadott cím alapján a választókörzetet
    * @param {Object} address - { pir, street, streetType, houseNumber }
-   * @returns {Object|null} - { oevk, votingStation, status: 'matched' } vagy null
+   * @returns {Promise<Object|null>} - { oevk, votingStation, status: 'matched' } vagy null
    */
-  findDistrict(address) {
-    if (!this.isLoaded) {
-      console.warn('⚠️ Választási adatbázis még nincs betöltve');
-      return null;
-    }
-
+  async findDistrict(address) {
     const { pir, street, streetType, houseNumber } = address;
 
-    // 1. PIR alapján szűrés
-    const recordsInPIR = this.indexedByPIR.get(pir?.trim());
-    if (!recordsInPIR || recordsInPIR.length === 0) {
-      console.log(`❌ Nincs találat a PIR-re: ${pir}`);
+    try {
+      // 1. PIR adatok betöltése
+      const recordsInPIR = await this.loadPirData(pir);
+
+      if (!recordsInPIR || recordsInPIR.length === 0) {
+        console.log(`❌ Nincs találat a PIR-re: ${pir}`);
+        return null;
+      }
+
+      console.log(`🔍 ${recordsInPIR.length} rekord a PIR-ben: ${pir}`);
+
+      // Normalizált értékek
+      const normalizedStreet = this.normalizeText(street);
+      const normalizedStreetType = this.normalizeText(streetType);
+      const normalizedHouseNumber = this.normalizeHouseNumber(houseNumber);
+
+      // 2. Közterület név szűrés
+      const streetMatches = recordsInPIR.filter(record => {
+        return this.normalizeText(record['Közterület név']) === normalizedStreet;
+      });
+
+      if (streetMatches.length === 0) {
+        console.log(`❌ Nincs találat a közterület névre: ${street}`);
+        return null;
+      }
+
+      console.log(`🔍 ${streetMatches.length} rekord a közterület névre: ${street}`);
+
+      // 3. Közterület jelleg szűrés
+      const streetTypeMatches = streetMatches.filter(record => {
+        return this.normalizeText(record['Közterület jelleg']) === normalizedStreetType;
+      });
+
+      if (streetTypeMatches.length === 0) {
+        console.log(`❌ Nincs találat a közterület jellegre: ${streetType}`);
+        return null;
+      }
+
+      console.log(`🔍 ${streetTypeMatches.length} rekord a közterület jellegre: ${streetType}`);
+
+      // 4. Házszám szűrés
+      const houseNumberMatches = streetTypeMatches.filter(record => {
+        const dbHouseNumber = this.normalizeHouseNumber(record['Házszám']);
+        return dbHouseNumber === normalizedHouseNumber;
+      });
+
+      if (houseNumberMatches.length === 0) {
+        console.log(`❌ Nincs találat a házszámra: ${houseNumber} (normalizált: ${normalizedHouseNumber})`);
+        return null;
+      }
+
+      // 5. Találat! Visszaadjuk az első egyezést
+      const match = houseNumberMatches[0];
+
+      console.log(`✅ Találat! OEVK: ${match.OEVK}, Szavazókör: ${match['Szavazókör']}`);
+
+      return {
+        oevk: match.OEVK || null,
+        votingStation: match['Szavazókör'] || null,
+        status: 'matched'
+      };
+    } catch (error) {
+      console.error('Hiba a cím keresése során:', error);
       return null;
     }
-
-    console.log(`🔍 ${recordsInPIR.length} rekord a PIR-ben: ${pir}`);
-
-    // Normalizált értékek
-    const normalizedStreet = this.normalizeText(street);
-    const normalizedStreetType = this.normalizeText(streetType);
-    const normalizedHouseNumber = this.normalizeHouseNumber(houseNumber);
-
-    // 2. Közterület név szűrés
-    const streetMatches = recordsInPIR.filter(record => {
-      return this.normalizeText(record['Közterület név']) === normalizedStreet;
-    });
-
-    if (streetMatches.length === 0) {
-      console.log(`❌ Nincs találat a közterület névre: ${street}`);
-      return null;
-    }
-
-    console.log(`🔍 ${streetMatches.length} rekord a közterület névre: ${street}`);
-
-    // 3. Közterület jelleg szűrés
-    const streetTypeMatches = streetMatches.filter(record => {
-      return this.normalizeText(record['Közterület jelleg']) === normalizedStreetType;
-    });
-
-    if (streetTypeMatches.length === 0) {
-      console.log(`❌ Nincs találat a közterület jellegre: ${streetType}`);
-      return null;
-    }
-
-    console.log(`🔍 ${streetTypeMatches.length} rekord a közterület jellegre: ${streetType}`);
-
-    // 4. Házszám szűrés
-    const houseNumberMatches = streetTypeMatches.filter(record => {
-      const dbHouseNumber = this.normalizeHouseNumber(record['Házszám']);
-      return dbHouseNumber === normalizedHouseNumber;
-    });
-
-    if (houseNumberMatches.length === 0) {
-      console.log(`❌ Nincs találat a házszámra: ${houseNumber} (normalizált: ${normalizedHouseNumber})`);
-      return null;
-    }
-
-    // 5. Találat! Visszaadjuk az első egyezést
-    const match = houseNumberMatches[0];
-
-    console.log(`✅ Találat! OEVK: ${match.OEVK}, Szavazókör: ${match['Szavazókör']}`);
-
-    return {
-      oevk: match.OEVK || null,
-      votingStation: match['Szavazókör'] || null,
-      status: 'matched'
-    };
   }
 }
 

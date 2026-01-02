@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext } from 'react';
 import votingDistrictService from '../services/votingDistrictService';
 
 const VotingDistrictContext = createContext({});
@@ -12,41 +12,15 @@ export const useVotingDistrict = () => {
 };
 
 export const VotingDistrictProvider = ({ children }) => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [isReady, setIsReady] = useState(false);
-
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        await votingDistrictService.loadData();
-        setIsReady(true);
-      } catch (err) {
-        console.error('Hiba a választási adatbázis betöltésekor:', err);
-        setError(err.message || 'Nem sikerült betölteni a választási adatbázist');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadData();
-  }, []);
-
-  const findDistrict = (address) => {
-    if (!isReady) {
-      console.warn('Választási adatbázis még nincs betöltve');
-      return null;
-    }
-    return votingDistrictService.findDistrict(address);
+  // findDistrict mostmár async és automatikusan tölti be a PIR adatokat
+  const findDistrict = async (address) => {
+    return await votingDistrictService.findDistrict(address);
   };
 
   const value = {
-    isLoading,
-    error,
-    isReady,
-    findDistrict
+    findDistrict,
+    isReady: true, // Mindig ready, mert nincs előzetes betöltés
+    isLoading: false // Nincs globális loading, csak PIR-specifikus
   };
 
   return (
