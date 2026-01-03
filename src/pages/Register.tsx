@@ -1,51 +1,173 @@
-import { useState, FormEvent, ChangeEvent } from 'react';
+import { useState, FormEvent, ChangeEvent, useEffect } from 'react';
 import { db } from '../services/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { useVotingDistrict, VotingDistrictProvider } from '../contexts/VotingDistrictContext';
-import type { VolunteerFormData, FormErrors } from '../types';
+import votingDistrictService from '../services/votingDistrictService';
+import type { DistrictRecord } from '../types';
 
 type SubmitStatus = 'success' | 'error' | null;
 
-const RegisterForm = () => {
-  const [formData, setFormData] = useState<VolunteerFormData>({
+interface FormData {
+  name: string;
+  email: string;
+  phone: string;
+  pir: string;
+  addressSearch: string;
+}
+
+interface FormErrors {
+  name?: string;
+  email?: string;
+  phone?: string;
+  pir?: string;
+  addressSearch?: string;
+}
+
+interface SelectedAddress {
+  street: string;
+  streetType: string;
+  houseNumber: string;
+  oevk: string;
+  votingStation: string;
+  fullAddress: string;
+}
+
+const Register = () => {
+  const [formData, setFormData] = useState<FormData>({
     name: '',
     email: '',
     phone: '',
     pir: '',
-    street: '',
-    streetType: '',
-    houseNumber: '',
+    addressSearch: '',
   });
 
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<SubmitStatus>(null);
 
-  const { findDistrict } = useVotingDistrict();
+  // PIR-hez tartozó címek
+  const [availableAddresses, setAvailableAddresses] = useState<DistrictRecord[]>([]);
+  const [loadingAddresses, setLoadingAddresses] = useState(false);
+  const [pirError, setPirError] = useState<string | null>(null);
 
-  // Közterület jellegek
-  const streetTypes = [
-    'utca',
-    'út',
-    'tér',
-    'köz',
-    'körút',
-    'sétány',
-    'park',
-    'fasor',
-    'lépcső',
-    'aluljáró',
-    'sor',
-    'dűlő',
-  ];
+  // Kiválasztott cím
+  const [selectedAddress, setSelectedAddress] = useState<SelectedAddress | null>(null);
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  // Autocomplete dropdown
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [filteredAddresses, setFilteredAddresses] = useState<DistrictRecord[]>([]);
+
+  // PIR betöltése amikor a felhasználó kitölti
+  const loadAddressesForPir = async (pir: string) => {
+    if (!pir || !/^\d{4}$/.test(pir)) {
+      setAvailableAddresses([]);
+      setPirError(null);
+      return;
+    }
+
+    setLoadingAddresses(true);
+    setPirError(null);
+
+    try {
+      const addresses = await votingDistrictService.loadPirData(pir);
+
+      if (addresses.length === 0) {
+        setPirError('Nincs elérhető cím ehhez az irányítószámhoz');
+        setAvailableAddresses([]);
+      } else {
+        setAvailableAddresses(addresses);
+        setPirError(null);
+      }
+    } catch (error) {
+      console.error('Hiba a címek betöltésekor:', error);
+      setPirError('Nem sikerült betölteni a címeket');
+      setAvailableAddresses([]);
+    } finally {
+      setLoadingAddresses(false);
+    }
+  };
+
+  // PIR mező változásakor
+  const handlePirChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const pir = e.target.value;
+    setFormData(prev => ({ ...prev, pir }));
+    setSelectedAddress(null);
+    setFormData(prev => ({ ...prev, addressSearch: '' }));
+
+    if (errors.pir) {
+      setErrors(prev => ({ ...prev, pir: '' }));
+    }
+  };
+
+  // PIR mező blur eseményre betöltjük a címeket
+  const handlePirBlur = () => {
+    if (formData.pir && /^\d{4}$/.test(formData.pir)) {
+      loadAddressesForPir(formData.pir);
+    }
+  };
+
+  // Cím keresés (autocomplete)
+  const handleAddressSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const search = e.target.value;
+    setFormData(prev => ({ ...prev, addressSearch: search }));
+    setSelectedAddress(null);
+
+    if (errors.addressSearch) {
+      setErrors(prev => ({ ...prev, addressSearch: '' }));
+    }
+
+    // Szűrés
+    if (search.trim() && availableAddresses.length > 0) {
+      const normalizedSearch = search.toLowerCase().trim();
+      const filtered = availableAddresses.filter(addr => {
+        const fullAddr = `${addr['Közterület név']} ${addr['Közterület jelleg']} ${addr['Házszám']}`.toLowerCase();
+        return fullAddr.includes(normalizedSearch);
+      });
+      setFilteredAddresses(filtered.slice(0, 50)); // Max 50 találat
+      setShowDropdown(true);
+    } else {
+      setFilteredAddresses([]);
+      setShowDropdown(false);
+    }
+  };
+
+  // Házszám normalizálás (leading zeros eltávolítása)
+  const normalizeHouseNumber = (houseNumber: string): string => {
+    if (!houseNumber) return '';
+    let normalized = houseNumber.trim().toUpperCase();
+    normalized = normalized.replace(/^0+/, '') || '0';
+    return normalized;
+  };
+
+  // Cím kiválasztása a dropdown-ból
+  const handleSelectAddress = (address: DistrictRecord) => {
+    const normalizedHouseNumber = normalizeHouseNumber(address['Házszám']);
+    const fullAddress = `${formData.pir} ${address['Közterület név']} ${address['Közterület jelleg']} ${normalizedHouseNumber}`;
+
+    setSelectedAddress({
+      street: address['Közterület név'],
+      streetType: address['Közterület jelleg'],
+      houseNumber: address['Házszám'],
+      oevk: address.OEVK,
+      votingStation: address['Szavazókör'],
+      fullAddress
+    });
+
+    setFormData(prev => ({
+      ...prev,
+      addressSearch: `${address['Közterület név']} ${address['Közterület jelleg']} ${normalizedHouseNumber}`
+    }));
+
+    setShowDropdown(false);
+    setFilteredAddresses([]);
+  };
+
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
-    // Clear error for this field when user starts typing
+
     if (errors[name as keyof FormErrors]) {
       setErrors(prev => ({
         ...prev,
@@ -78,26 +200,16 @@ const RegisterForm = () => {
       newErrors.phone = 'Érvénytelen telefonszám formátum';
     }
 
-    // PIR (Irányítószám) validáció
+    // PIR validáció
     if (!formData.pir.trim()) {
       newErrors.pir = 'Az irányítószám megadása kötelező';
     } else if (!/^\d{4}$/.test(formData.pir)) {
       newErrors.pir = 'Az irányítószámnak 4 számjegyből kell állnia';
     }
 
-    // Közterület név validáció
-    if (!formData.street.trim()) {
-      newErrors.street = 'A közterület név megadása kötelező';
-    }
-
-    // Közterület jelleg validáció
-    if (!formData.streetType) {
-      newErrors.streetType = 'A közterület jelleg kiválasztása kötelező';
-    }
-
-    // Házszám validáció
-    if (!formData.houseNumber.trim()) {
-      newErrors.houseNumber = 'A házszám megadása kötelező';
+    // Cím validáció
+    if (!selectedAddress) {
+      newErrors.addressSearch = 'Kérlek válassz egy címet a listából';
     }
 
     setErrors(newErrors);
@@ -107,7 +219,7 @@ const RegisterForm = () => {
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (!validateForm()) {
+    if (!validateForm() || !selectedAddress) {
       return;
     }
 
@@ -115,19 +227,7 @@ const RegisterForm = () => {
     setSubmitStatus(null);
 
     try {
-      // Volunteers collection referencia
       const volunteersRef = collection(db, 'volunteers');
-
-      // Teljes cím összeállítása
-      const fullAddress = `${formData.pir} ${formData.street} ${formData.streetType} ${formData.houseNumber}`;
-
-      // Cím egyeztetés a választási adatbázisban (dinamikusan tölti be a PIR adatokat)
-      const districtMatch = await findDistrict({
-        pir: formData.pir,
-        street: formData.street,
-        streetType: formData.streetType,
-        houseNumber: formData.houseNumber
-      });
 
       const volunteerData = {
         name: formData.name.trim(),
@@ -135,21 +235,20 @@ const RegisterForm = () => {
         phone: formData.phone.trim(),
         address: {
           pir: formData.pir.trim(),
-          street: formData.street.trim(),
-          streetType: formData.streetType,
-          houseNumber: formData.houseNumber.trim(),
-          fullAddress: fullAddress,
+          street: selectedAddress.street,
+          streetType: selectedAddress.streetType,
+          houseNumber: selectedAddress.houseNumber,
+          fullAddress: selectedAddress.fullAddress,
         },
-        district: districtMatch || {
-          oevk: null,
-          votingStation: null,
-          status: 'unknown' as const, // 'matched' | 'unknown'
+        district: {
+          oevk: selectedAddress.oevk,
+          votingStation: selectedAddress.votingStation,
+          status: 'matched' as const,
         },
         createdAt: serverTimestamp(),
         submittedAt: serverTimestamp(),
       };
 
-      // Mentés Firestore-ba
       await addDoc(volunteersRef, volunteerData);
 
       setSubmitStatus('success');
@@ -159,21 +258,31 @@ const RegisterForm = () => {
         email: '',
         phone: '',
         pir: '',
-        street: '',
-        streetType: '',
-        houseNumber: '',
+        addressSearch: '',
       });
+      setSelectedAddress(null);
+      setAvailableAddresses([]);
+      setPirError(null);
 
     } catch (error) {
       console.error('Hiba a regisztráció során:', error);
-      console.error('Error code:', (error as any).code);
-      console.error('Error message:', (error as any).message);
-      console.error('Full error:', JSON.stringify(error, null, 2));
       setSubmitStatus('error');
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  // Kattintás detektálás a dropdown bezárásához
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setShowDropdown(false);
+    };
+
+    if (showDropdown) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [showDropdown]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
@@ -258,93 +367,111 @@ const RegisterForm = () => {
               {errors.phone && <p className="mt-1 text-sm text-red-500">{errors.phone}</p>}
             </div>
 
-            {/* Cím - egy sorban */}
+            {/* Cím szekció */}
             <div className="border-t pt-6">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">Lakcím</h3>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Irányítószám */}
-                <div>
-                  <label htmlFor="pir" className="block text-sm font-medium text-gray-700 mb-1">
-                    Irányítószám <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    id="pir"
-                    name="pir"
-                    value={formData.pir}
-                    onChange={handleChange}
-                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-gray-400 focus:border-transparent transition ${
-                      errors.pir ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                    placeholder="1111"
-                    maxLength={4}
-                  />
-                  {errors.pir && <p className="mt-1 text-sm text-red-500">{errors.pir}</p>}
-                </div>
-
-                {/* Közterület név */}
-                <div>
-                  <label htmlFor="street" className="block text-sm font-medium text-gray-700 mb-1">
-                    Közterület név <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    id="street"
-                    name="street"
-                    value={formData.street}
-                    onChange={handleChange}
-                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-gray-400 focus:border-transparent transition ${
-                      errors.street ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                    placeholder="Kossuth"
-                  />
-                  {errors.street && <p className="mt-1 text-sm text-red-500">{errors.street}</p>}
-                </div>
-
-                {/* Közterület jelleg */}
-                <div>
-                  <label htmlFor="streetType" className="block text-sm font-medium text-gray-700 mb-1">
-                    Közterület jelleg <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    id="streetType"
-                    name="streetType"
-                    value={formData.streetType}
-                    onChange={handleChange}
-                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-gray-400 focus:border-transparent transition ${
-                      errors.streetType ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                  >
-                    <option value="">Válassz...</option>
-                    {streetTypes.map((type) => (
-                      <option key={type} value={type}>
-                        {type}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.streetType && <p className="mt-1 text-sm text-red-500">{errors.streetType}</p>}
-                </div>
-
-                {/* Házszám */}
-                <div>
-                  <label htmlFor="houseNumber" className="block text-sm font-medium text-gray-700 mb-1">
-                    Házszám <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    id="houseNumber"
-                    name="houseNumber"
-                    value={formData.houseNumber}
-                    onChange={handleChange}
-                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-gray-400 focus:border-transparent transition ${
-                      errors.houseNumber ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                    placeholder="12"
-                  />
-                  {errors.houseNumber && <p className="mt-1 text-sm text-red-500">{errors.houseNumber}</p>}
-                </div>
+              {/* Irányítószám */}
+              <div className="mb-4">
+                <label htmlFor="pir" className="block text-sm font-medium text-gray-700 mb-1">
+                  Irányítószám <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="pir"
+                  name="pir"
+                  value={formData.pir}
+                  onChange={handlePirChange}
+                  onBlur={handlePirBlur}
+                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-gray-400 focus:border-transparent transition ${
+                    errors.pir ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  placeholder="1111"
+                  maxLength={4}
+                />
+                {errors.pir && <p className="mt-1 text-sm text-red-500">{errors.pir}</p>}
+                {loadingAddresses && (
+                  <p className="mt-1 text-sm text-blue-600">Címek betöltése...</p>
+                )}
+                {pirError && (
+                  <p className="mt-1 text-sm text-orange-600">{pirError}</p>
+                )}
+                {availableAddresses.length > 0 && (
+                  <p className="mt-1 text-sm text-green-600">
+                    {availableAddresses.length} elérhető cím betöltve
+                  </p>
+                )}
               </div>
+
+              {/* Cím keresés (autocomplete) */}
+              <div className="relative">
+                <label htmlFor="addressSearch" className="block text-sm font-medium text-gray-700 mb-1">
+                  Cím <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="addressSearch"
+                  name="addressSearch"
+                  value={formData.addressSearch}
+                  onChange={handleAddressSearchChange}
+                  onFocus={() => {
+                    if (filteredAddresses.length > 0) {
+                      setShowDropdown(true);
+                    }
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                  disabled={!availableAddresses.length || loadingAddresses}
+                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-gray-400 focus:border-transparent transition ${
+                    errors.addressSearch ? 'border-red-500' : 'border-gray-300'
+                  } ${!availableAddresses.length || loadingAddresses ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                  placeholder={availableAddresses.length ? "Kezd el gépelni a címet..." : "Előbb add meg az irányítószámot"}
+                  autoComplete="off"
+                />
+                {errors.addressSearch && <p className="mt-1 text-sm text-red-500">{errors.addressSearch}</p>}
+
+                {/* Autocomplete dropdown */}
+                {showDropdown && filteredAddresses.length > 0 && (
+                  <div
+                    className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {filteredAddresses.map((addr, index) => {
+                      const normalizedHouseNumber = normalizeHouseNumber(addr['Házszám']);
+                      const displayAddress = `${addr['Közterület név']} ${addr['Közterület jelleg']} ${normalizedHouseNumber}`;
+                      return (
+                        <div
+                          key={`${addr.OEVK}-${addr['Szavazókör']}-${index}`}
+                          onClick={() => handleSelectAddress(addr)}
+                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
+                        >
+                          <div className="font-medium text-gray-900">{displayAddress}</div>
+                          <div className="text-xs text-gray-500">
+                            {addr.Település} - OEVK: {addr.OEVK}, Szavazókör: {addr['Szavazókör']}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {showDropdown && formData.addressSearch && filteredAddresses.length === 0 && availableAddresses.length > 0 && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-4">
+                    <p className="text-sm text-gray-600">Nincs találat. Próbálj más keresési kifejezést.</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Kiválasztott cím megjelenítése */}
+              {selectedAddress && (
+                <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <p className="text-sm text-green-800">
+                    <span className="font-medium">Kiválasztott cím:</span> {selectedAddress.fullAddress}
+                  </p>
+                  <p className="text-xs text-green-700 mt-1">
+                    OEVK: {selectedAddress.oevk}, Szavazókör: {selectedAddress.votingStation}
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Submit gomb */}
@@ -370,16 +497,6 @@ const RegisterForm = () => {
         </div>
       </div>
     </div>
-  );
-};
-
-// Wrapper komponens VotingDistrictProvider-rel
-// Így a CSV csak akkor töltődik be amikor a Register oldal megnyílik
-const Register = () => {
-  return (
-    <VotingDistrictProvider>
-      <RegisterForm />
-    </VotingDistrictProvider>
   );
 };
 
