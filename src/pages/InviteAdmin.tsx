@@ -1,29 +1,45 @@
-import { useState } from 'react';
+import { useState, FormEvent, ChangeEvent } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 
+interface InviteFormData {
+  name: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+}
+
+interface FormErrors {
+  name?: string;
+  email?: string;
+  password?: string;
+  confirmPassword?: string;
+}
+
+type SubmitStatus = 'success' | 'error' | null;
+
 function InviteAdmin() {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<InviteFormData>({
     name: '',
     email: '',
     password: '',
     confirmPassword: '',
   });
 
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitStatus, setSubmitStatus] = useState(null); // 'success' | 'error' | null
+  const [submitStatus, setSubmitStatus] = useState<SubmitStatus>(null);
   const [errorMessage, setErrorMessage] = useState('');
 
   const { inviteAdmin, currentUser } = useAuth();
 
-  const handleChange = (e) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
     // Clear error for this field
-    if (errors[name]) {
+    if (errors[name as keyof FormErrors]) {
       setErrors(prev => ({
         ...prev,
         [name]: ''
@@ -31,8 +47,8 @@ function InviteAdmin() {
     }
   };
 
-  const validateForm = () => {
-    const newErrors = {};
+  const validateForm = (): boolean => {
+    const newErrors: FormErrors = {};
 
     // Név validáció
     if (!formData.name.trim()) {
@@ -64,10 +80,15 @@ function InviteAdmin() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!validateForm()) {
+      return;
+    }
+
+    if (!currentUser) {
+      setErrorMessage('Nincs bejelentkezve');
       return;
     }
 
@@ -92,7 +113,7 @@ function InviteAdmin() {
         confirmPassword: '',
       });
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Admin meghívási hiba:', error);
       setSubmitStatus('error');
 

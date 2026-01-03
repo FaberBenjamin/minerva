@@ -3,13 +3,19 @@ import { db } from '../services/firebase';
 import { collection, getDocs, query, where, doc, updateDoc } from 'firebase/firestore';
 import { useToast } from '../contexts/ToastContext';
 import LoadingSpinner from '../components/LoadingSpinner';
+import type { Volunteer } from '../types';
+
+interface EditForm {
+  oevk: string;
+  votingStation: string;
+}
 
 function UnknownDistricts() {
-  const [unknownVolunteers, setUnknownVolunteers] = useState([]);
+  const [unknownVolunteers, setUnknownVolunteers] = useState<Volunteer[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [editingVolunteer, setEditingVolunteer] = useState(null);
-  const [editForm, setEditForm] = useState({
+  const [error, setError] = useState<string | null>(null);
+  const [editingVolunteer, setEditingVolunteer] = useState<Volunteer | null>(null);
+  const [editForm, setEditForm] = useState<EditForm>({
     oevk: '',
     votingStation: ''
   });
@@ -29,9 +35,9 @@ function UnknownDistricts() {
       const q = query(volunteersRef, where('district.status', '==', 'unknown'));
       const querySnapshot = await getDocs(q);
 
-      const volunteersData = [];
+      const volunteersData: Volunteer[] = [];
       querySnapshot.forEach((doc) => {
-        volunteersData.push({ id: doc.id, ...doc.data() });
+        volunteersData.push({ id: doc.id, ...doc.data() } as Volunteer);
       });
 
       // Rendezés név szerint
@@ -46,7 +52,7 @@ function UnknownDistricts() {
     }
   };
 
-  const handleEdit = (volunteer) => {
+  const handleEdit = (volunteer: Volunteer) => {
     setEditingVolunteer(volunteer);
     setEditForm({
       oevk: volunteer.district.oevk || '',
@@ -62,6 +68,10 @@ function UnknownDistricts() {
   const handleSave = async () => {
     if (!editForm.oevk || !editForm.votingStation) {
       showToast('Kérlek add meg az OEVK-t és a szavazókört!', 'warning');
+      return;
+    }
+
+    if (!editingVolunteer) {
       return;
     }
 

@@ -3,15 +3,16 @@ import { useState, useEffect } from 'react';
 import { db } from '../services/firebase';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import LoadingSpinner from '../components/LoadingSpinner';
+import type { Volunteer } from '../types';
 
 function VotingStationDetail() {
-  const { id } = useParams();
-  const [volunteers, setVolunteers] = useState([]);
+  const { id } = useParams<{ id: string }>();
+  const [volunteers, setVolunteers] = useState<Volunteer[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   // Parse ID (format: "OEVK-VotingStation")
-  const [oevk, votingStation] = id.split('-');
+  const [oevk, votingStation] = id?.split('-') || ['', ''];
 
   useEffect(() => {
     const loadVolunteers = async () => {
@@ -29,10 +30,10 @@ function VotingStationDetail() {
         );
 
         const querySnapshot = await getDocs(q);
-        const volunteersData = [];
+        const volunteersData: Volunteer[] = [];
 
         querySnapshot.forEach((doc) => {
-          volunteersData.push({ id: doc.id, ...doc.data() });
+          volunteersData.push({ id: doc.id, ...doc.data() } as Volunteer);
         });
 
         // Rendezés név szerint

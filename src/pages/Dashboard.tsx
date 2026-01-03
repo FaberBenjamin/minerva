@@ -1,19 +1,27 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, MouseEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db } from '../services/firebase';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { exportVolunteersByOEVK, exportAllByOEVK } from '../services/exportService';
 import { useToast } from '../contexts/ToastContext';
 import LoadingSpinner from '../components/LoadingSpinner';
+import type { Volunteer } from '../types';
+
+interface VotingStationGroup {
+  oevk: string;
+  votingStation: string;
+  count: number;
+  volunteers: Volunteer[];
+}
 
 function Dashboard() {
-  const [votingStations, setVotingStations] = useState([]);
-  const [allVolunteers, setAllVolunteers] = useState([]);
+  const [votingStations, setVotingStations] = useState<VotingStationGroup[]>([]);
+  const [allVolunteers, setAllVolunteers] = useState<Volunteer[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
-  const [exportProgress, setExportProgress] = useState(null);
+  const [exportProgress, setExportProgress] = useState<string | null>(null);
 
   const navigate = useNavigate();
   const { showToast } = useToast();
@@ -30,14 +38,14 @@ function Dashboard() {
         const querySnapshot = await getDocs(q);
 
         // Összegyűjtjük az összes volunteers-t exporthoz
-        const volunteersData = [];
+        const volunteersData: Volunteer[] = [];
         querySnapshot.forEach((doc) => {
-          volunteersData.push({ id: doc.id, ...doc.data() });
+          volunteersData.push({ id: doc.id, ...doc.data() } as Volunteer);
         });
         setAllVolunteers(volunteersData);
 
         // Csoportosítás OEVK + Szavazókör szerint
-        const grouped = new Map();
+        const grouped = new Map<string, VotingStationGroup>();
 
         volunteersData.forEach((volunteer) => {
           const { oevk, votingStation } = volunteer.district;
@@ -55,8 +63,9 @@ function Dashboard() {
             });
           }
 
-          grouped.get(key).count++;
-          grouped.get(key).volunteers.push(volunteer);
+          const group = grouped.get(key)!;
+          group.count++;
+          group.volunteers.push(volunteer);
         });
 
         // Map -> Array konverzió, rendezés OEVK majd szavazókör szerint
@@ -90,17 +99,17 @@ function Dashboard() {
     );
   });
 
-  const handleViewDetails = (oevk, votingStation) => {
+  const handleViewDetails = (oevk: string, votingStation: string) => {
     navigate(`/station/${oevk}-${votingStation}`);
   };
 
-  const handleExportOEVK = async (oevk, e) => {
+  const handleExportOEVK = async (oevk: string, e: MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
     try {
       setExporting(true);
       const result = await exportVolunteersByOEVK(allVolunteers, oevk);
       showToast(`Sikeres export! ${result.count} önkéntes exportálva.`, 'success');
-    } catch (error) {
+    } catch (error: any) {
       showToast(`Hiba az exportálás során: ${error.message}`, 'error');
     } finally {
       setExporting(false);
@@ -109,7 +118,7 @@ function Dashboard() {
 
   const handleExportAll = async () => {
     // OEVK-k csoportosítása
-    const groupedByOEVK = allVolunteers.reduce((acc, volunteer) => {
+    const groupedByOEVK = allVolunteers.reduce<Record<string, Volunteer[]>>((acc, volunteer) => {
       if (volunteer.district.status !== 'matched' || !volunteer.district.oevk) {
         return acc;
       }
@@ -149,7 +158,7 @@ function Dashboard() {
 
       setExportProgress(null);
       showToast(`Sikeres export! ${oevkList.length} OEVK exportálva külön fájlokba.`, 'success');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Export hiba:', error);
       setExportProgress(null);
       showToast(`Hiba az exportálás során: ${error.message}`, 'error');

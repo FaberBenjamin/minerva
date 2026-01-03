@@ -1,11 +1,20 @@
 import ExcelJS from 'exceljs';
+import type { Volunteer } from '../types';
+
+interface ExportResult {
+  success: boolean;
+  count: number;
+}
 
 /**
  * Export volunteers to Excel by OEVK
- * @param {Array} volunteers - Array of volunteer objects
- * @param {string} oevk - OEVK identifier
+ * @param volunteers - Array of volunteer objects
+ * @param oevk - OEVK identifier
  */
-export const exportVolunteersByOEVK = async (volunteers, oevk) => {
+export const exportVolunteersByOEVK = async (
+  volunteers: Volunteer[],
+  oevk: string
+): Promise<ExportResult> => {
   try {
     // Szűrjük az önkénteseket OEVK szerint
     const filteredVolunteers = volunteers.filter(
@@ -88,12 +97,12 @@ export const exportVolunteersByOEVK = async (volunteers, oevk) => {
 
 /**
  * Export all volunteers grouped by OEVK (multiple files)
- * @param {Array} volunteers - Array of volunteer objects
+ * @param volunteers - Array of volunteer objects
  */
-export const exportAllByOEVK = async (volunteers) => {
+export const exportAllByOEVK = async (volunteers: Volunteer[]): Promise<ExportResult> => {
   try {
     // Csoportosítás OEVK szerint
-    const groupedByOEVK = volunteers.reduce((acc, volunteer) => {
+    const groupedByOEVK = volunteers.reduce<Record<string, Volunteer[]>>((acc, volunteer) => {
       if (volunteer.district.status !== 'matched' || !volunteer.district.oevk) {
         return acc;
       }

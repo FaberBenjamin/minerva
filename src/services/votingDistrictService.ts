@@ -1,4 +1,9 @@
+import type { AddressInput, District, DistrictRecord } from '../types';
+
 class VotingDistrictService {
+  private pirCache: Map<string, DistrictRecord[]>;
+  private loadingPirs: Map<string, Promise<DistrictRecord[]>>;
+
   constructor() {
     this.pirCache = new Map(); // Cache a már letöltött PIR adatoknak
     this.loadingPirs = new Map(); // Promise-ok a jelenleg töltődő PIR-ekhez
@@ -6,10 +11,10 @@ class VotingDistrictService {
 
   /**
    * Betölti az adott PIR JSON fájlt
-   * @param {string} pir - PIR / irányítószám
-   * @returns {Promise<Array>} - A PIR-hez tartozó címek tömbje
+   * @param pir - PIR / irányítószám
+   * @returns A PIR-hez tartozó címek tömbje
    */
-  async loadPirData(pir) {
+  async loadPirData(pir: string): Promise<DistrictRecord[]> {
     const cleanPir = pir?.trim();
     if (!cleanPir) {
       throw new Error('PIR megadása kötelező');
@@ -18,17 +23,17 @@ class VotingDistrictService {
     // Ha már cache-elve van
     if (this.pirCache.has(cleanPir)) {
       console.log(`✅ PIR ${cleanPir} cache-ből betöltve`);
-      return this.pirCache.get(cleanPir);
+      return this.pirCache.get(cleanPir)!;
     }
 
     // Ha épp töltődik, várjuk meg
     if (this.loadingPirs.has(cleanPir)) {
       console.log(`⏳ PIR ${cleanPir} töltődik, várakozás...`);
-      return this.loadingPirs.get(cleanPir);
+      return this.loadingPirs.get(cleanPir)!;
     }
 
     // Új betöltés indítása
-    const loadPromise = (async () => {
+    const loadPromise = (async (): Promise<DistrictRecord[]> => {
       try {
         console.log(`📥 PIR ${cleanPir} betöltése...`);
         const response = await fetch(`/minerva/districts/${cleanPir}.json`);
@@ -42,7 +47,7 @@ class VotingDistrictService {
           throw new Error(`HTTP ${response.status}: Nem sikerült betölteni a PIR adatokat`);
         }
 
-        const data = await response.json();
+        const data: DistrictRecord[] = await response.json();
         console.log(`✅ PIR ${cleanPir} betöltve: ${data.length} cím`);
 
         this.pirCache.set(cleanPir, data);
@@ -64,7 +69,7 @@ class VotingDistrictService {
    * "000001" -> "1"
    * "000012A" -> "12A"
    */
-  normalizeHouseNumber(houseNumber) {
+  normalizeHouseNumber(houseNumber: string): string {
     if (!houseNumber) return '';
 
     // Trim és uppercase
@@ -80,7 +85,7 @@ class VotingDistrictService {
   /**
    * Normalizálja a szöveget összehasonlításhoz (kisbetű, ékezet nélkül)
    */
-  normalizeText(text) {
+  normalizeText(text: string): string {
     if (!text) return '';
 
     return text
@@ -92,10 +97,10 @@ class VotingDistrictService {
 
   /**
    * Keresi a megadott cím alapján a választókörzetet
-   * @param {Object} address - { pir, street, streetType, houseNumber }
-   * @returns {Promise<Object|null>} - { oevk, votingStation, status: 'matched' } vagy null
+   * @param address - { pir, street, streetType, houseNumber }
+   * @returns { oevk, votingStation, status: 'matched' } vagy null
    */
-  async findDistrict(address) {
+  async findDistrict(address: AddressInput): Promise<District | null> {
     const { pir, street, streetType, houseNumber } = address;
 
     try {

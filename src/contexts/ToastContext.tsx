@@ -1,8 +1,14 @@
-import { createContext, useContext, useState, useCallback } from 'react';
+import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import type { Toast, ToastType } from '../types';
 
-const ToastContext = createContext();
+interface ToastContextType {
+  showToast: (message: string, type?: ToastType) => void;
+  removeToast: (id: number) => void;
+}
 
-export const useToast = () => {
+const ToastContext = createContext<ToastContextType | undefined>(undefined);
+
+export const useToast = (): ToastContextType => {
   const context = useContext(ToastContext);
   if (!context) {
     throw new Error('useToast must be used within ToastProvider');
@@ -10,10 +16,14 @@ export const useToast = () => {
   return context;
 };
 
-export const ToastProvider = ({ children }) => {
-  const [toasts, setToasts] = useState([]);
+interface ToastProviderProps {
+  children: ReactNode;
+}
 
-  const showToast = useCallback((message, type = 'info') => {
+export const ToastProvider = ({ children }: ToastProviderProps) => {
+  const [toasts, setToasts] = useState<Toast[]>([]);
+
+  const showToast = useCallback((message: string, type: ToastType = 'info') => {
     const id = Date.now();
     setToasts((prev) => [...prev, { id, message, type }]);
 
@@ -23,7 +33,7 @@ export const ToastProvider = ({ children }) => {
     }, 5000);
   }, []);
 
-  const removeToast = useCallback((id) => {
+  const removeToast = useCallback((id: number) => {
     setToasts((prev) => prev.filter((toast) => toast.id !== id));
   }, []);
 
@@ -32,22 +42,26 @@ export const ToastProvider = ({ children }) => {
       {children}
       <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-md">
         {toasts.map((toast) => (
-          <Toast key={toast.id} {...toast} onClose={() => removeToast(toast.id)} />
+          <ToastComponent key={toast.id} {...toast} onClose={() => removeToast(toast.id)} />
         ))}
       </div>
     </ToastContext.Provider>
   );
 };
 
-const Toast = ({ id, message, type, onClose }) => {
-  const bgColors = {
+interface ToastComponentProps extends Toast {
+  onClose: () => void;
+}
+
+const ToastComponent = ({ id, message, type, onClose }: ToastComponentProps) => {
+  const bgColors: Record<ToastType, string> = {
     success: 'bg-green-600',
     error: 'bg-red-600',
     info: 'bg-blue-600',
     warning: 'bg-yellow-600',
   };
 
-  const icons = {
+  const icons: Record<ToastType, string> = {
     success: '✓',
     error: '✕',
     info: 'ℹ',

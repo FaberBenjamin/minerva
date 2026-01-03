@@ -1,18 +1,31 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { auth, db } from '../services/firebase';
 import {
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
   createUserWithEmailAndPassword,
-  getAuth
+  getAuth,
+  User,
+  UserCredential
 } from 'firebase/auth';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { initializeApp, deleteApp } from 'firebase/app';
+import { doc, getDoc, setDoc, serverTimestamp, DocumentData } from 'firebase/firestore';
+import { initializeApp, deleteApp, FirebaseApp } from 'firebase/app';
+import type { UserProfile } from '../types';
 
-const AuthContext = createContext({});
+interface AuthContextType {
+  currentUser: User | null;
+  userProfile: UserProfile | null;
+  isAdmin: boolean;
+  loading: boolean;
+  login: (email: string, password: string) => Promise<UserCredential>;
+  logout: () => Promise<void>;
+  inviteAdmin: (email: string, password: string, name: string, invitedByUid: string) => Promise<User>;
+}
 
-export const useAuth = () => {
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
@@ -20,9 +33,13 @@ export const useAuth = () => {
   return context;
 };
 
-export const AuthProvider = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState(null);
-  const [userProfile, setUserProfile] = useState(null);
+interface AuthProviderProps {
+  children: ReactNode;
+}
+
+export const AuthProvider = ({ children }: AuthProviderProps) => {
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
 
@@ -35,7 +52,12 @@ export const AuthProvider = ({ children }) => {
         try {
           const adminDoc = await getDoc(doc(db, 'admins', user.uid));
           if (adminDoc.exists()) {
-            setUserProfile(adminDoc.data());
+            const data = adminDoc.data() as DocumentData;
+            setUserProfile({
+              email: data.email,
+              name: data.name,
+              uid: data.uid
+            });
             setIsAdmin(true);
           } else {
             // Ha a user nincs az admins collection-ben, kijelentkeztetjük
@@ -59,7 +81,7 @@ export const AuthProvider = ({ children }) => {
     return unsubscribe;
   }, []);
 
-  const login = async (email, password) => {
+  const login = async (email: string, password: string): Promise<UserCredential> => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
@@ -77,7 +99,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = async () => {
+  const logout = async (): Promise<void> => {
     try {
       await signOut(auth);
       setCurrentUser(null);
@@ -89,7 +111,12 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Admin meghívó funkció - új admin létrehozása
-  const inviteAdmin = async (email, password, name, invitedByUid) => {
+  const inviteAdmin = async (
+    email: string,
+    password: string,
+    name: string,
+    invitedByUid: string
+  ): Promise<User> => {
     try {
       // Másodlagos Firebase app létrehozása, hogy ne jelentkeztesse ki a jelenlegi admint
       const firebaseConfig = {
@@ -102,7 +129,7 @@ export const AuthProvider = ({ children }) => {
       };
 
       // Másodlagos app létrehozása
-      const secondaryApp = initializeApp(firebaseConfig, 'Secondary');
+      const secondaryApp: FirebaseApp = initializeApp(firebaseConfig, 'Secondary');
       const secondaryAuth = getAuth(secondaryApp);
 
       // Új Firebase user létrehozása a másodlagos app-ban
@@ -127,7 +154,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const value = {
+  const value: AuthContextType = {
     currentUser,
     userProfile,
     isAdmin,

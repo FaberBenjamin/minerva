@@ -1,10 +1,13 @@
-import { useState } from 'react';
+import { useState, FormEvent, ChangeEvent } from 'react';
 import { db } from '../services/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { useVotingDistrict, VotingDistrictProvider } from '../contexts/VotingDistrictContext';
+import type { VolunteerFormData, FormErrors } from '../types';
+
+type SubmitStatus = 'success' | 'error' | null;
 
 const RegisterForm = () => {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<VolunteerFormData>({
     name: '',
     email: '',
     phone: '',
@@ -14,9 +17,9 @@ const RegisterForm = () => {
     houseNumber: '',
   });
 
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitStatus, setSubmitStatus] = useState(null); // 'success' | 'error' | null
+  const [submitStatus, setSubmitStatus] = useState<SubmitStatus>(null);
 
   const { findDistrict } = useVotingDistrict();
 
@@ -36,14 +39,14 @@ const RegisterForm = () => {
     'dűlő',
   ];
 
-  const handleChange = (e) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
     // Clear error for this field when user starts typing
-    if (errors[name]) {
+    if (errors[name as keyof FormErrors]) {
       setErrors(prev => ({
         ...prev,
         [name]: ''
@@ -51,8 +54,8 @@ const RegisterForm = () => {
     }
   };
 
-  const validateForm = () => {
-    const newErrors = {};
+  const validateForm = (): boolean => {
+    const newErrors: FormErrors = {};
 
     // Név validáció
     if (!formData.name.trim()) {
@@ -101,7 +104,7 @@ const RegisterForm = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!validateForm()) {
@@ -140,7 +143,7 @@ const RegisterForm = () => {
         district: districtMatch || {
           oevk: null,
           votingStation: null,
-          status: 'unknown', // 'matched' | 'unknown'
+          status: 'unknown' as const, // 'matched' | 'unknown'
         },
         createdAt: serverTimestamp(),
         submittedAt: serverTimestamp(),
@@ -163,8 +166,8 @@ const RegisterForm = () => {
 
     } catch (error) {
       console.error('Hiba a regisztráció során:', error);
-      console.error('Error code:', error.code);
-      console.error('Error message:', error.message);
+      console.error('Error code:', (error as any).code);
+      console.error('Error message:', (error as any).message);
       console.error('Full error:', JSON.stringify(error, null, 2));
       setSubmitStatus('error');
     } finally {
@@ -275,7 +278,7 @@ const RegisterForm = () => {
                       errors.pir ? 'border-red-500' : 'border-gray-300'
                     }`}
                     placeholder="1111"
-                    maxLength="4"
+                    maxLength={4}
                   />
                   {errors.pir && <p className="mt-1 text-sm text-red-500">{errors.pir}</p>}
                 </div>

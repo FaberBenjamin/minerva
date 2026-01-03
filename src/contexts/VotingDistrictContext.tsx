@@ -1,9 +1,16 @@
-import { createContext, useContext } from 'react';
+import { createContext, useContext, ReactNode } from 'react';
 import votingDistrictService from '../services/votingDistrictService';
+import type { AddressInput, District } from '../types';
 
-const VotingDistrictContext = createContext({});
+interface VotingDistrictContextType {
+  findDistrict: (address: AddressInput) => Promise<District | null>;
+  isReady: boolean;
+  isLoading: boolean;
+}
 
-export const useVotingDistrict = () => {
+const VotingDistrictContext = createContext<VotingDistrictContextType | undefined>(undefined);
+
+export const useVotingDistrict = (): VotingDistrictContextType => {
   const context = useContext(VotingDistrictContext);
   if (!context) {
     throw new Error('useVotingDistrict must be used within a VotingDistrictProvider');
@@ -11,13 +18,17 @@ export const useVotingDistrict = () => {
   return context;
 };
 
-export const VotingDistrictProvider = ({ children }) => {
+interface VotingDistrictProviderProps {
+  children: ReactNode;
+}
+
+export const VotingDistrictProvider = ({ children }: VotingDistrictProviderProps) => {
   // findDistrict mostmár async és automatikusan tölti be a PIR adatokat
-  const findDistrict = async (address) => {
+  const findDistrict = async (address: AddressInput): Promise<District | null> => {
     return await votingDistrictService.findDistrict(address);
   };
 
-  const value = {
+  const value: VotingDistrictContextType = {
     findDistrict,
     isReady: true, // Mindig ready, mert nincs előzetes betöltés
     isLoading: false // Nincs globális loading, csak PIR-specifikus
