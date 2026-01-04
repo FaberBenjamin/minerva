@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useState } from 'react';
+import Logo from './Logo';
 
 function Header() {
   const navigate = useNavigate();
@@ -21,12 +22,13 @@ function Header() {
       <div className="container mx-auto px-4 py-4 max-w-7xl">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-8">
-            <div className="flex items-center gap-2">
-              <Link to="/" className="text-xl font-bold text-minerva-gray-900">
-                Minerva
-              </Link>
-              <span className="text-xs text-minerva-gray-500">v2.0</span>
-            </div>
+            <Link to="/" className="flex items-center gap-3 group">
+              <Logo size="sm" className="transition-transform group-hover:scale-110" />
+              <div className="flex items-center gap-2">
+                <span className="text-xl font-bold text-minerva-gray-900">Minerva</span>
+                <span className="text-xs text-minerva-gray-500">v2.0</span>
+              </div>
+            </Link>
             <nav className="hidden md:flex space-x-6">
               <Link
                 to="/"

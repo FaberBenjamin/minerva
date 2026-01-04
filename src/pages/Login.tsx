@@ -1,6 +1,7 @@
 import { useState, FormEvent, ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import Logo from '../components/Logo';
 
 function Login() {
   const [email, setEmail] = useState('');
@@ -45,6 +46,9 @@ function Login() {
     <div className="min-h-screen bg-minerva-gray-100 flex items-center justify-center px-4">
       <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
         <div className="text-center mb-8">
+          <div className="flex justify-center mb-4">
+            <Logo size="xl" />
+          </div>
           <h1 className="text-3xl font-bold text-minerva-gray-900">Minerva</h1>
           <p className="text-minerva-gray-600 mt-2">Önkéntes Toborzó Rendszer</p>
         </div>
