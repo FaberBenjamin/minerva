@@ -3,6 +3,9 @@ import { db } from '../services/firebase';
 import { collection, getDocs, query, where, doc, updateDoc } from 'firebase/firestore';
 import { useToast } from '../contexts/ToastContext';
 import LoadingSpinner from '../components/LoadingSpinner';
+import NotesButton from '../components/NotesButton';
+import NotesPanel from '../components/NotesPanel';
+import { getNotesCount } from '../services/notesService';
 import type { Volunteer } from '../types';
 
 interface EditForm {
@@ -20,11 +23,23 @@ function UnknownDistricts() {
     votingStation: ''
   });
   const [saving, setSaving] = useState(false);
+  const [selectedVolunteer, setSelectedVolunteer] = useState<Volunteer | null>(null);
+  const [isPanelOpen, setIsPanelOpen] = useState(false);
   const { showToast } = useToast();
 
   useEffect(() => {
     loadUnknownVolunteers();
   }, []);
+
+  const handleOpenNotes = (volunteer: Volunteer) => {
+    setSelectedVolunteer(volunteer);
+    setIsPanelOpen(true);
+  };
+
+  const handleCloseNotes = () => {
+    setIsPanelOpen(false);
+    setSelectedVolunteer(null);
+  };
 
   const loadUnknownVolunteers = async () => {
     try {
@@ -143,6 +158,9 @@ function UnknownDistricts() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-minerva-gray-700 uppercase tracking-wider">
                     Cím
                   </th>
+                  <th className="px-6 py-3 text-center text-xs font-medium text-minerva-gray-700 uppercase tracking-wider">
+                    Jegyzetek
+                  </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-minerva-gray-700 uppercase tracking-wider">
                     Műveletek
                   </th>
@@ -163,6 +181,12 @@ function UnknownDistricts() {
                     <td className="px-6 py-4 text-sm text-gray-700">
                       {volunteer.address.fullAddress}
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                      <NotesButton
+                        notesCount={getNotesCount(volunteer)}
+                        onClick={() => handleOpenNotes(volunteer)}
+                      />
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <button
                         onClick={() => handleEdit(volunteer)}
@@ -181,7 +205,7 @@ function UnknownDistricts() {
 
       {/* Szerkesztő Modal */}
       {editingVolunteer && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 backdrop-blur-sm bg-white/30 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
             <h2 className="text-xl font-bold text-gray-900 mb-4">
               Szavazókör hozzárendelése
@@ -248,6 +272,15 @@ function UnknownDistricts() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Notes Panel */}
+      {selectedVolunteer && (
+        <NotesPanel
+          volunteer={selectedVolunteer}
+          isOpen={isPanelOpen}
+          onClose={handleCloseNotes}
+        />
       )}
     </div>
   );

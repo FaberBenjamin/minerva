@@ -3,6 +3,9 @@ import { useState, useEffect } from 'react';
 import { db } from '../services/firebase';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import LoadingSpinner from '../components/LoadingSpinner';
+import NotesButton from '../components/NotesButton';
+import NotesPanel from '../components/NotesPanel';
+import { getNotesCount } from '../services/notesService';
 import type { Volunteer } from '../types';
 
 function VotingStationDetail() {
@@ -10,9 +13,21 @@ function VotingStationDetail() {
   const [volunteers, setVolunteers] = useState<Volunteer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedVolunteer, setSelectedVolunteer] = useState<Volunteer | null>(null);
+  const [isPanelOpen, setIsPanelOpen] = useState(false);
 
   // Parse ID (format: "OEVK-VotingStation")
   const [oevk, votingStation] = id?.split('-') || ['', ''];
+
+  const handleOpenNotes = (volunteer: Volunteer) => {
+    setSelectedVolunteer(volunteer);
+    setIsPanelOpen(true);
+  };
+
+  const handleCloseNotes = () => {
+    setIsPanelOpen(false);
+    setSelectedVolunteer(null);
+  };
 
   useEffect(() => {
     const loadVolunteers = async () => {
@@ -99,6 +114,9 @@ function VotingStationDetail() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-minerva-gray-700 uppercase tracking-wider">
                     Cím
                   </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-minerva-gray-700 uppercase tracking-wider">
+                    Jegyzetek
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-minerva-gray-200">
@@ -116,6 +134,12 @@ function VotingStationDetail() {
                     <td className="px-6 py-4 text-sm text-gray-700">
                       {volunteer.address.fullAddress}
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                      <NotesButton
+                        notesCount={getNotesCount(volunteer)}
+                        onClick={() => handleOpenNotes(volunteer)}
+                      />
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -123,6 +147,15 @@ function VotingStationDetail() {
           </div>
         )}
       </div>
+
+      {/* Notes Panel */}
+      {selectedVolunteer && (
+        <NotesPanel
+          volunteer={selectedVolunteer}
+          isOpen={isPanelOpen}
+          onClose={handleCloseNotes}
+        />
+      )}
     </div>
   );
 }

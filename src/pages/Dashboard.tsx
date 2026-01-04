@@ -5,6 +5,17 @@ import { collection, getDocs, query, where } from 'firebase/firestore';
 import { exportVolunteersByOEVK, exportAllByOEVK } from '../services/exportService';
 import { useToast } from '../contexts/ToastContext';
 import LoadingSpinner from '../components/LoadingSpinner';
+import StatCard from '../components/StatCard';
+import RegistrationChart from '../components/RegistrationChart';
+import OEVKBarChart from '../components/OEVKBarChart';
+import {
+  calculateAnalytics,
+  getDailyRegistrations,
+  getOEVKCounts,
+  type AnalyticsStats,
+  type DailyRegistration,
+  type OEVKCount,
+} from '../services/analyticsService';
 import type { Volunteer } from '../types';
 
 interface VotingStationGroup {
@@ -22,6 +33,12 @@ function Dashboard() {
   const [error, setError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState<string | null>(null);
+
+  // Analytics state
+  const [analyticsStats, setAnalyticsStats] = useState<AnalyticsStats | null>(null);
+  const [dailyRegistrations, setDailyRegistrations] = useState<DailyRegistration[]>([]);
+  const [oevkCounts, setOevkCounts] = useState<OEVKCount[]>([]);
+  const [analyticsLoading, setAnalyticsLoading] = useState(true);
 
   const navigate = useNavigate();
   const { showToast } = useToast();
@@ -86,6 +103,32 @@ function Dashboard() {
     };
 
     loadVolunteers();
+  }, []);
+
+  // Load analytics data
+  useEffect(() => {
+    const loadAnalytics = async () => {
+      try {
+        setAnalyticsLoading(true);
+
+        const [stats, registrations, oevks] = await Promise.all([
+          calculateAnalytics(),
+          getDailyRegistrations(30),
+          getOEVKCounts(),
+        ]);
+
+        setAnalyticsStats(stats);
+        setDailyRegistrations(registrations);
+        setOevkCounts(oevks);
+      } catch (err) {
+        console.error('Error loading analytics:', err);
+        // Don't show error toast, just silently fail for analytics
+      } finally {
+        setAnalyticsLoading(false);
+      }
+    };
+
+    loadAnalytics();
   }, []);
 
   // Szűrés keresési szöveg alapján
@@ -181,6 +224,59 @@ function Dashboard() {
 
   return (
     <div>
+      {/* Analytics Overview */}
+      {!analyticsLoading && analyticsStats && (
+        <div className="mb-8">
+          <h2 className="text-xl font-bold text-minerva-gray-900 mb-4">Áttekintés</h2>
+
+          {/* Stat Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <StatCard
+              title="Összes önkéntes"
+              value={analyticsStats.totalVolunteers}
+              icon={
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              }
+            />
+            <StatCard
+              title="Aktív körzetek"
+              value={analyticsStats.activeDistricts}
+              icon={
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                </svg>
+              }
+            />
+            <StatCard
+              title="Ismeretlen címek"
+              value={analyticsStats.unknownAddresses}
+              icon={
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              }
+            />
+            <StatCard
+              title="Mai regisztrációk"
+              value={analyticsStats.todayRegistrations}
+              icon={
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              }
+            />
+          </div>
+
+          {/* Charts */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <RegistrationChart data={dailyRegistrations} />
+            <OEVKBarChart data={oevkCounts} />
+          </div>
+        </div>
+      )}
+
       <div className="mb-6">
         <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-4">
           <h1 className="text-2xl font-bold text-minerva-gray-900">Szavazókörök</h1>

@@ -35,6 +35,17 @@ export interface DistrictRecord {
   PIR: string;
 }
 
+// ==================== Note Types ====================
+
+export interface Note {
+  id: string;
+  text: string;
+  author: string;
+  authorId: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp | null;
+}
+
 // ==================== Volunteer Types ====================
 
 export interface Volunteer {
@@ -46,6 +57,7 @@ export interface Volunteer {
   district: District;
   createdAt: Timestamp;
   submittedAt: Timestamp;
+  notes?: Note[];
 }
 
 export interface VolunteerFormData {
