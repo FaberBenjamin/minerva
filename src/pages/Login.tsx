@@ -43,19 +43,19 @@ function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-minerva-gray-100 flex items-center justify-center px-4">
-      <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
+    <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: 'var(--theme-bg-secondary)' }}>
+      <div className="max-w-md w-full rounded-lg shadow-lg p-8" style={{ backgroundColor: 'var(--theme-card-bg)' }}>
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
             <Logo size="xl" />
           </div>
-          <h1 className="text-3xl font-bold text-minerva-gray-900">Minerva</h1>
-          <p className="text-minerva-gray-600 mt-2">Önkéntes Toborzó Rendszer</p>
+          <h1 className="text-3xl font-bold" style={{ color: 'var(--theme-text-primary)' }}>Minerva</h1>
+          <p className="mt-2" style={{ color: 'var(--theme-text-tertiary)' }}>Önkéntes Toborzó Rendszer</p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-6">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-minerva-gray-700 mb-2">
+            <label htmlFor="email" className="block text-sm font-medium mb-2" style={{ color: 'var(--theme-text-secondary)' }}>
               Email cím
             </label>
             <input
@@ -64,13 +64,20 @@ function Login() {
               value={email}
               onChange={(e: ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
               required
-              className="w-full px-4 py-2 border border-minerva-gray-300 rounded-md focus:ring-2 focus:ring-minerva-gray-600 focus:border-transparent outline-none"
+              className="w-full px-4 py-2 border rounded-md outline-none transition-colors"
+              style={{
+                backgroundColor: 'var(--theme-input-bg)',
+                borderColor: 'var(--theme-input-border)',
+                color: 'var(--theme-input-text)'
+              }}
+              onFocus={(e) => e.currentTarget.style.borderColor = 'var(--theme-input-focus)'}
+              onBlur={(e) => e.currentTarget.style.borderColor = 'var(--theme-input-border)'}
               placeholder="admin@example.com"
             />
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-minerva-gray-700 mb-2">
+            <label htmlFor="password" className="block text-sm font-medium mb-2" style={{ color: 'var(--theme-text-secondary)' }}>
               Jelszó
             </label>
             <input
@@ -79,13 +86,24 @@ function Login() {
               value={password}
               onChange={(e: ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
               required
-              className="w-full px-4 py-2 border border-minerva-gray-300 rounded-md focus:ring-2 focus:ring-minerva-gray-600 focus:border-transparent outline-none"
+              className="w-full px-4 py-2 border rounded-md outline-none transition-colors"
+              style={{
+                backgroundColor: 'var(--theme-input-bg)',
+                borderColor: 'var(--theme-input-border)',
+                color: 'var(--theme-input-text)'
+              }}
+              onFocus={(e) => e.currentTarget.style.borderColor = 'var(--theme-input-focus)'}
+              onBlur={(e) => e.currentTarget.style.borderColor = 'var(--theme-input-border)'}
               placeholder="••••••••"
             />
           </div>
 
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
+            <div className="border px-4 py-3 rounded-md text-sm" style={{
+              backgroundColor: 'rgba(220, 38, 38, 0.1)',
+              borderColor: 'var(--theme-error)',
+              color: 'var(--theme-error)'
+            }}>
               {error}
             </div>
           )}
@@ -93,13 +111,23 @@ function Login() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-minerva-gray-900 text-white py-2 px-4 rounded-md hover:bg-minerva-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full py-2 px-4 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{
+              backgroundColor: loading ? 'var(--theme-btn-secondary-bg)' : 'var(--theme-btn-primary-bg)',
+              color: loading ? 'var(--theme-btn-secondary-text)' : 'var(--theme-btn-primary-text)'
+            }}
+            onMouseEnter={(e) => {
+              if (!loading) e.currentTarget.style.backgroundColor = 'var(--theme-btn-primary-hover)';
+            }}
+            onMouseLeave={(e) => {
+              if (!loading) e.currentTarget.style.backgroundColor = 'var(--theme-btn-primary-bg)';
+            }}
           >
             {loading ? 'Bejelentkezés...' : 'Bejelentkezés'}
           </button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-minerva-gray-600">
+        <p className="mt-6 text-center text-sm" style={{ color: 'var(--theme-text-tertiary)' }}>
           Csak meghívott adminisztrátorok jelentkezhetnek be
         </p>
       </div>

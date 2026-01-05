@@ -10,27 +10,32 @@ interface StatCardProps {
 
 function StatCard({ title, value, icon, trend }: StatCardProps) {
   return (
-    <div className="bg-white rounded-lg shadow p-6 border border-minerva-gray-200">
+    <div className="rounded-lg shadow p-6 border" style={{
+      backgroundColor: 'var(--theme-card-bg)',
+      borderColor: 'var(--theme-card-border)'
+    }}>
       <div className="flex items-center justify-between mb-2">
-        <p className="text-sm font-medium text-minerva-gray-600 uppercase tracking-wide">
+        <p className="text-sm font-medium uppercase tracking-wide" style={{
+          color: 'var(--theme-text-tertiary)'
+        }}>
           {title}
         </p>
         {icon && (
-          <div className="text-minerva-gray-400">
+          <div style={{ color: 'var(--theme-text-tertiary)' }}>
             {icon}
           </div>
         )}
       </div>
 
       <div className="flex items-baseline gap-2">
-        <p className="text-3xl font-bold text-minerva-gray-900">
+        <p className="text-3xl font-bold" style={{ color: 'var(--theme-text-primary)' }}>
           {value.toLocaleString('hu-HU')}
         </p>
 
         {trend && (
-          <span className={`text-sm font-medium ${
-            trend.isPositive ? 'text-green-600' : 'text-red-600'
-          }`}>
+          <span className="text-sm font-medium" style={{
+            color: trend.isPositive ? 'var(--theme-success)' : 'var(--theme-error)'
+          }}>
             {trend.isPositive ? '↑' : '↓'} {Math.abs(trend.value)}%
           </span>
         )}

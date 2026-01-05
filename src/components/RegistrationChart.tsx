@@ -22,41 +22,45 @@ function RegistrationChart({ data }: RegistrationChartProps) {
   }));
 
   return (
-    <div className="bg-white rounded-lg shadow p-6 border border-minerva-gray-200">
-      <h3 className="text-lg font-semibold text-minerva-gray-900 mb-4">
+    <div className="rounded-lg shadow p-6 border" style={{
+      backgroundColor: 'var(--theme-card-bg)',
+      borderColor: 'var(--theme-card-border)'
+    }}>
+      <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--theme-text-primary)' }}>
         Regisztrációk (utolsó 30 nap)
       </h3>
 
       <ResponsiveContainer width="100%" height={300}>
         <LineChart data={chartData}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--theme-border-secondary)" />
           <XAxis
             dataKey="dateLabel"
-            stroke="#6b6b6b"
+            stroke="var(--theme-text-tertiary)"
             style={{ fontSize: '12px' }}
             interval="preserveStartEnd"
           />
           <YAxis
-            stroke="#6b6b6b"
+            stroke="var(--theme-text-tertiary)"
             style={{ fontSize: '12px' }}
             allowDecimals={false}
           />
           <Tooltip
             contentStyle={{
-              backgroundColor: '#ffffff',
-              border: '1px solid #e0e0e0',
+              backgroundColor: 'var(--theme-card-bg)',
+              border: '1px solid var(--theme-card-border)',
               borderRadius: '8px',
               fontSize: '14px',
+              color: 'var(--theme-text-primary)'
             }}
-            labelStyle={{ color: '#2d2d2d', fontWeight: 'bold' }}
+            labelStyle={{ color: 'var(--theme-text-primary)', fontWeight: 'bold' }}
             formatter={(value: number) => [`${value} regisztráció`, 'Szám']}
           />
           <Line
             type="monotone"
             dataKey="count"
-            stroke="#2d2d2d"
+            stroke="var(--theme-btn-primary-bg)"
             strokeWidth={2}
-            dot={{ fill: '#2d2d2d', r: 4 }}
+            dot={{ fill: 'var(--theme-btn-primary-bg)', r: 4 }}
             activeDot={{ r: 6 }}
           />
         </LineChart>

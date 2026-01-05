@@ -227,7 +227,7 @@ function Dashboard() {
       {/* Analytics Overview */}
       {!analyticsLoading && analyticsStats && (
         <div className="mb-8">
-          <h2 className="text-xl font-bold text-minerva-gray-900 mb-4">Áttekintés</h2>
+          <h2 className="text-xl font-bold mb-4" style={{ color: 'var(--theme-text-primary)' }}>Áttekintés</h2>
 
           {/* Stat Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -279,7 +279,7 @@ function Dashboard() {
 
       <div className="mb-6">
         <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-4">
-          <h1 className="text-2xl font-bold text-minerva-gray-900">Szavazókörök</h1>
+          <h1 className="text-2xl font-bold" style={{ color: 'var(--theme-text-primary)' }}>Szavazókörök</h1>
 
           {votingStations.length > 0 && (
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
@@ -291,11 +291,17 @@ function Dashboard() {
               <button
                 onClick={handleExportAll}
                 disabled={exporting}
-                className={`w-full sm:w-auto px-4 py-2 rounded-md font-medium text-white text-sm ${
-                  exporting
-                    ? 'bg-gray-400 cursor-not-allowed'
-                    : 'bg-green-600 hover:bg-green-700'
-                }`}
+                className="w-full sm:w-auto px-4 py-2 rounded-md font-medium text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{
+                  backgroundColor: exporting ? 'var(--theme-btn-secondary-bg)' : 'var(--theme-success)',
+                  color: exporting ? 'var(--theme-btn-secondary-text)' : '#ffffff'
+                }}
+                onMouseEnter={(e) => {
+                  if (!exporting) e.currentTarget.style.opacity = '0.9';
+                }}
+                onMouseLeave={(e) => {
+                  if (!exporting) e.currentTarget.style.opacity = '1';
+                }}
               >
                 {exporting ? 'Exportálás...' : 'Összes OEVK exportálása'}
               </button>
@@ -309,54 +315,64 @@ function Dashboard() {
             placeholder="Keresés szavazókör vagy OEVK szerint..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full max-w-md px-4 py-2 border border-minerva-gray-300 rounded-md focus:ring-2 focus:ring-minerva-gray-600 focus:border-transparent outline-none"
+            className="w-full max-w-md px-4 py-2 border rounded-md outline-none transition-colors"
+            style={{
+              backgroundColor: 'var(--theme-input-bg)',
+              borderColor: 'var(--theme-input-border)',
+              color: 'var(--theme-input-text)'
+            }}
+            onFocus={(e) => e.currentTarget.style.borderColor = 'var(--theme-input-focus)'}
+            onBlur={(e) => e.currentTarget.style.borderColor = 'var(--theme-input-border)'}
           />
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow">
+      <div className="rounded-lg shadow" style={{ backgroundColor: 'var(--theme-card-bg)' }}>
         {votingStations.length === 0 ? (
-          <div className="p-8 text-center text-minerva-gray-600">
+          <div className="p-8 text-center" style={{ color: 'var(--theme-text-tertiary)' }}>
             <p>Még nincsenek regisztrált önkéntesek hozzárendelt szavazókörrel.</p>
             <p className="text-sm mt-2">Az önkéntesek a /register oldalon tudnak regisztrálni.</p>
           </div>
         ) : filteredStations.length === 0 ? (
-          <div className="p-8 text-center text-minerva-gray-600">
+          <div className="p-8 text-center" style={{ color: 'var(--theme-text-tertiary)' }}>
             <p>Nincs találat a keresési feltételeknek.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-minerva-gray-100 border-b border-minerva-gray-200">
+              <thead className="border-b" style={{ backgroundColor: 'var(--theme-bg-secondary)', borderColor: 'var(--theme-border-primary)' }}>
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-minerva-gray-700 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--theme-text-secondary)' }}>
                     OEVK
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-minerva-gray-700 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--theme-text-secondary)' }}>
                     Szavazókör
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-minerva-gray-700 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--theme-text-secondary)' }}>
                     Önkéntesek száma
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-minerva-gray-700 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--theme-text-secondary)' }}>
                     Műveletek
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-minerva-gray-200">
+              <tbody className="divide-y" style={{ borderColor: 'var(--theme-border-primary)' }}>
                 {filteredStations.map((station) => (
                   <tr
                     key={`${station.oevk}-${station.votingStation}`}
-                    className="hover:bg-gray-50 cursor-pointer"
+                    className="cursor-pointer transition-colors"
+                    style={{ backgroundColor: 'var(--theme-card-bg)' }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--theme-card-hover)'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--theme-card-bg)'}
                     onClick={() => handleViewDetails(station.oevk, station.votingStation)}
                   >
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium" style={{ color: 'var(--theme-text-primary)' }}>
                       {station.oevk}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm" style={{ color: 'var(--theme-text-secondary)' }}>
                       {station.votingStation}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm" style={{ color: 'var(--theme-text-secondary)' }}>
                       {station.count}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -364,17 +380,27 @@ function Dashboard() {
                         <button
                           onClick={(e) => handleExportOEVK(station.oevk, e)}
                           disabled={exporting}
-                          className="text-green-600 hover:text-green-900 disabled:text-gray-400"
+                          className="transition-colors disabled:opacity-50"
+                          style={{ color: exporting ? 'var(--theme-text-tertiary)' : 'var(--theme-success)' }}
+                          onMouseEnter={(e) => {
+                            if (!exporting) e.currentTarget.style.opacity = '0.8';
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!exporting) e.currentTarget.style.opacity = '1';
+                          }}
                           title={`Export OEVK ${station.oevk}`}
                         >
-                          📥 Export
+                          Export
                         </button>
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             handleViewDetails(station.oevk, station.votingStation);
                           }}
-                          className="text-gray-600 hover:text-gray-900"
+                          className="transition-colors"
+                          style={{ color: 'var(--theme-link-text)' }}
+                          onMouseEnter={(e) => e.currentTarget.style.color = 'var(--theme-link-hover)'}
+                          onMouseLeave={(e) => e.currentTarget.style.color = 'var(--theme-link-text)'}
                         >
                           Megtekintés →
                         </button>

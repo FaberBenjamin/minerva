@@ -7,7 +7,10 @@ function NotesButton({ notesCount, onClick }: NotesButtonProps) {
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-1.5 text-minerva-gray-600 hover:text-minerva-gray-900 transition-colors"
+      className="flex items-center gap-1.5 transition-colors"
+      style={{ color: 'var(--theme-text-secondary)' }}
+      onMouseEnter={(e) => e.currentTarget.style.color = 'var(--theme-text-primary)'}
+      onMouseLeave={(e) => e.currentTarget.style.color = 'var(--theme-text-secondary)'}
       title={notesCount > 0 ? `Jegyzetek (${notesCount} db)` : 'Jegyzetek hozzáadása'}
     >
       <svg
@@ -25,7 +28,13 @@ function NotesButton({ notesCount, onClick }: NotesButtonProps) {
         />
       </svg>
       {notesCount > 0 && (
-        <span className="bg-minerva-gray-200 text-minerva-gray-700 text-xs rounded-full px-2 py-0.5 font-medium">
+        <span
+          className="text-xs rounded-full px-2 py-0.5 font-medium"
+          style={{
+            backgroundColor: 'var(--theme-bg-secondary)',
+            color: 'var(--theme-text-primary)'
+          }}
+        >
           {notesCount}
         </span>
       )}

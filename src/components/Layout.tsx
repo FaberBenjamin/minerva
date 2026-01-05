@@ -3,7 +3,7 @@ import Header from './Header';
 
 function Layout() {
   return (
-    <div className="min-h-screen bg-minerva-gray-100">
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--theme-bg-secondary)' }}>
       <Header />
       <main className="container mx-auto px-4 py-8 max-w-7xl">
         <Outlet />

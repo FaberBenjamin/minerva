@@ -18,37 +18,41 @@ function OEVKBarChart({ data }: OEVKBarChartProps) {
   const sortedData = [...data].sort((a, b) => b.count - a.count);
 
   return (
-    <div className="bg-white rounded-lg shadow p-6 border border-minerva-gray-200">
-      <h3 className="text-lg font-semibold text-minerva-gray-900 mb-4">
+    <div className="rounded-lg shadow p-6 border" style={{
+      backgroundColor: 'var(--theme-card-bg)',
+      borderColor: 'var(--theme-card-border)'
+    }}>
+      <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--theme-text-primary)' }}>
         Önkéntesek OEVK szerinti megoszlása
       </h3>
 
       <ResponsiveContainer width="100%" height={300}>
         <BarChart data={sortedData}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--theme-border-secondary)" />
           <XAxis
             dataKey="oevk"
-            stroke="#6b6b6b"
+            stroke="var(--theme-text-tertiary)"
             style={{ fontSize: '12px' }}
           />
           <YAxis
-            stroke="#6b6b6b"
+            stroke="var(--theme-text-tertiary)"
             style={{ fontSize: '12px' }}
             allowDecimals={false}
           />
           <Tooltip
             contentStyle={{
-              backgroundColor: '#ffffff',
-              border: '1px solid #e0e0e0',
+              backgroundColor: 'var(--theme-card-bg)',
+              border: '1px solid var(--theme-card-border)',
               borderRadius: '8px',
               fontSize: '14px',
+              color: 'var(--theme-text-primary)'
             }}
-            labelStyle={{ color: '#2d2d2d', fontWeight: 'bold' }}
+            labelStyle={{ color: 'var(--theme-text-primary)', fontWeight: 'bold' }}
             formatter={(value: number) => [`${value} önkéntes`, 'Szám']}
           />
           <Bar
             dataKey="count"
-            fill="#2d2d2d"
+            fill="var(--theme-btn-primary-bg)"
             radius={[4, 4, 0, 0]}
           />
         </BarChart>

@@ -80,38 +80,65 @@ function NoteCard({ note, currentUserId, onEdit, onDelete }: NoteCardProps) {
 
   if (isEditing) {
     return (
-      <div className="bg-minerva-gray-50 rounded-lg p-4 border border-minerva-gray-200">
+      <div
+        className="rounded-lg p-4 border"
+        style={{
+          backgroundColor: 'var(--theme-bg-secondary)',
+          borderColor: 'var(--theme-border-primary)'
+        }}
+      >
         <div className="flex items-center gap-2 text-sm mb-2">
-          <span className="font-medium text-minerva-gray-900">{note.author}</span>
-          <span className="text-minerva-gray-400">•</span>
-          <span className="text-minerva-gray-600">{formatDate(note.createdAt)}</span>
+          <span className="font-medium" style={{ color: 'var(--theme-text-primary)' }}>{note.author}</span>
+          <span style={{ color: 'var(--theme-text-tertiary)' }}>•</span>
+          <span style={{ color: 'var(--theme-text-secondary)' }}>{formatDate(note.createdAt)}</span>
         </div>
 
         <textarea
           value={editText}
           onChange={(e) => setEditText(e.target.value)}
-          className="w-full px-3 py-2 border border-minerva-gray-300 rounded-md focus:ring-2 focus:ring-minerva-gray-600 focus:border-transparent resize-none text-sm"
+          className="w-full px-3 py-2 border rounded-md outline-none resize-none text-sm transition-colors"
+          style={{
+            backgroundColor: 'var(--theme-input-bg)',
+            borderColor: 'var(--theme-input-border)',
+            color: 'var(--theme-input-text)'
+          }}
+          onFocus={(e) => e.currentTarget.style.borderColor = 'var(--theme-input-focus)'}
+          onBlur={(e) => e.currentTarget.style.borderColor = 'var(--theme-input-border)'}
           rows={3}
           maxLength={500}
           disabled={saving}
         />
 
         <div className="flex items-center justify-between mt-2">
-          <span className="text-xs text-minerva-gray-500">
+          <span className="text-xs" style={{ color: 'var(--theme-text-tertiary)' }}>
             {editText.length}/500 karakter
           </span>
           <div className="flex gap-2">
             <button
               onClick={handleCancel}
               disabled={saving}
-              className="text-xs text-minerva-gray-600 hover:text-minerva-gray-900 disabled:opacity-50"
+              className="text-xs disabled:opacity-50 transition-colors"
+              style={{ color: 'var(--theme-text-secondary)' }}
+              onMouseEnter={(e) => {
+                if (!saving) e.currentTarget.style.color = 'var(--theme-text-primary)';
+              }}
+              onMouseLeave={(e) => {
+                if (!saving) e.currentTarget.style.color = 'var(--theme-text-secondary)';
+              }}
             >
               Mégse
             </button>
             <button
               onClick={handleSave}
               disabled={!editText.trim() || saving}
-              className="text-xs text-blue-600 hover:text-blue-900 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="text-xs disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              style={{ color: 'var(--theme-link-text)' }}
+              onMouseEnter={(e) => {
+                if (!saving && editText.trim()) e.currentTarget.style.color = 'var(--theme-link-hover)';
+              }}
+              onMouseLeave={(e) => {
+                if (!saving && editText.trim()) e.currentTarget.style.color = 'var(--theme-link-text)';
+              }}
             >
               {saving ? 'Mentés...' : 'Mentés'}
             </button>
@@ -122,12 +149,18 @@ function NoteCard({ note, currentUserId, onEdit, onDelete }: NoteCardProps) {
   }
 
   return (
-    <div className="bg-minerva-gray-50 rounded-lg p-4 border border-minerva-gray-200">
+    <div
+      className="rounded-lg p-4 border"
+      style={{
+        backgroundColor: 'var(--theme-bg-secondary)',
+        borderColor: 'var(--theme-border-primary)'
+      }}
+    >
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2 text-sm">
-          <span className="font-medium text-minerva-gray-900">{note.author}</span>
-          <span className="text-minerva-gray-400">•</span>
-          <span className="text-minerva-gray-600">{formatDate(note.createdAt)}</span>
+          <span className="font-medium" style={{ color: 'var(--theme-text-primary)' }}>{note.author}</span>
+          <span style={{ color: 'var(--theme-text-tertiary)' }}>•</span>
+          <span style={{ color: 'var(--theme-text-secondary)' }}>{formatDate(note.createdAt)}</span>
         </div>
 
         {isOwnNote && (onEdit || onDelete) && (
@@ -135,7 +168,10 @@ function NoteCard({ note, currentUserId, onEdit, onDelete }: NoteCardProps) {
             {onEdit && (
               <button
                 onClick={() => setIsEditing(true)}
-                className="text-minerva-gray-500 hover:text-blue-600 text-xs transition-colors"
+                className="text-xs transition-colors"
+                style={{ color: 'var(--theme-text-tertiary)' }}
+                onMouseEnter={(e) => e.currentTarget.style.color = 'var(--theme-link-text)'}
+                onMouseLeave={(e) => e.currentTarget.style.color = 'var(--theme-text-tertiary)'}
                 title="Szerkesztés"
               >
                 <svg
@@ -156,7 +192,10 @@ function NoteCard({ note, currentUserId, onEdit, onDelete }: NoteCardProps) {
             {onDelete && (
               <button
                 onClick={handleDelete}
-                className="text-minerva-gray-500 hover:text-red-600 text-xs transition-colors"
+                className="text-xs transition-colors"
+                style={{ color: 'var(--theme-text-tertiary)' }}
+                onMouseEnter={(e) => e.currentTarget.style.color = 'var(--theme-error)'}
+                onMouseLeave={(e) => e.currentTarget.style.color = 'var(--theme-text-tertiary)'}
                 title="Törlés"
               >
                 <svg
@@ -178,12 +217,12 @@ function NoteCard({ note, currentUserId, onEdit, onDelete }: NoteCardProps) {
         )}
       </div>
 
-      <p className="text-sm text-minerva-gray-800 whitespace-pre-wrap">
+      <p className="text-sm whitespace-pre-wrap" style={{ color: 'var(--theme-text-primary)' }}>
         {note.text}
       </p>
 
       {note.updatedAt && note.updatedAt !== note.createdAt && (
-        <p className="text-xs text-minerva-gray-500 mt-2 italic">
+        <p className="text-xs mt-2 italic" style={{ color: 'var(--theme-text-tertiary)' }}>
           Szerkesztve: {formatDate(note.updatedAt)}
         </p>
       )}

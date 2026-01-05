@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { db } from '../services/firebase';
-import { collection, getDocs, query, where, doc, updateDoc } from 'firebase/firestore';
+import { collection, getDocs, query, where, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { useToast } from '../contexts/ToastContext';
 import LoadingSpinner from '../components/LoadingSpinner';
 import NotesButton from '../components/NotesButton';
 import NotesPanel from '../components/NotesPanel';
+import DeleteConfirmModal from '../components/DeleteConfirmModal';
 import { getNotesCount } from '../services/notesService';
 import type { Volunteer } from '../types';
 
@@ -25,6 +26,8 @@ function UnknownDistricts() {
   const [saving, setSaving] = useState(false);
   const [selectedVolunteer, setSelectedVolunteer] = useState<Volunteer | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const [volunteerToDelete, setVolunteerToDelete] = useState<Volunteer | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const { showToast } = useToast();
 
   useEffect(() => {
@@ -115,6 +118,35 @@ function UnknownDistricts() {
     }
   };
 
+  const handleDeleteClick = (volunteer: Volunteer) => {
+    setVolunteerToDelete(volunteer);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!volunteerToDelete) return;
+
+    try {
+      setDeleting(true);
+      const volunteerRef = doc(db, 'volunteers', volunteerToDelete.id);
+      await deleteDoc(volunteerRef);
+
+      // Frissítjük a lokális listát
+      setUnknownVolunteers(unknownVolunteers.filter(v => v.id !== volunteerToDelete.id));
+
+      showToast('Önkéntes sikeresen törölve', 'success');
+      setVolunteerToDelete(null);
+    } catch (err) {
+      console.error('Hiba a törlés során:', err);
+      showToast('Hiba történt a törlés során', 'error');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setVolunteerToDelete(null);
+  };
+
   if (loading) {
     return <LoadingSpinner />;
   }
@@ -130,55 +162,61 @@ function UnknownDistricts() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-minerva-gray-900">Ismeretlen Körzetek</h1>
-        <p className="text-minerva-gray-600 mt-1">
+        <h1 className="text-2xl font-bold" style={{ color: 'var(--theme-text-primary)' }}>Ismeretlen Körzetek</h1>
+        <p className="mt-1" style={{ color: 'var(--theme-text-tertiary)' }}>
           Azon önkéntesek listája, akiknek a címe nem található az adatbázisban
         </p>
       </div>
 
-      <div className="bg-white rounded-lg shadow">
+      <div className="rounded-lg shadow" style={{ backgroundColor: 'var(--theme-card-bg)' }}>
         {unknownVolunteers.length === 0 ? (
-          <div className="p-8 text-center text-minerva-gray-600">
+          <div className="p-8 text-center" style={{ color: 'var(--theme-text-tertiary)' }}>
             <p>Nincsenek ismeretlen körzettel rendelkező önkéntesek.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-minerva-gray-100 border-b border-minerva-gray-200">
+              <thead className="border-b" style={{ backgroundColor: 'var(--theme-bg-secondary)', borderColor: 'var(--theme-border-primary)' }}>
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-minerva-gray-700 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--theme-text-secondary)' }}>
                     Név
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-minerva-gray-700 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--theme-text-secondary)' }}>
                     Email
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-minerva-gray-700 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--theme-text-secondary)' }}>
                     Telefonszám
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-minerva-gray-700 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--theme-text-secondary)' }}>
                     Cím
                   </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-minerva-gray-700 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--theme-text-secondary)' }}>
                     Jegyzetek
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-minerva-gray-700 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--theme-text-secondary)' }}>
                     Műveletek
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-minerva-gray-200">
+              <tbody className="divide-y" style={{ borderColor: 'var(--theme-border-primary)' }}>
                 {unknownVolunteers.map((volunteer) => (
-                  <tr key={volunteer.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  <tr
+                    key={volunteer.id}
+                    className="transition-colors"
+                    style={{ backgroundColor: 'var(--theme-card-bg)' }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--theme-card-hover)'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--theme-card-bg)'}
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium" style={{ color: 'var(--theme-text-primary)' }}>
                       {volunteer.name}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm" style={{ color: 'var(--theme-text-secondary)' }}>
                       {volunteer.email}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm" style={{ color: 'var(--theme-text-secondary)' }}>
                       {volunteer.phone}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-700">
+                    <td className="px-6 py-4 text-sm" style={{ color: 'var(--theme-text-secondary)' }}>
                       {volunteer.address.fullAddress}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
@@ -188,12 +226,44 @@ function UnknownDistricts() {
                       />
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button
-                        onClick={() => handleEdit(volunteer)}
-                        className="text-blue-600 hover:text-blue-900"
-                      >
-                        Szerkesztés
-                      </button>
+                      <div className="flex gap-3 justify-end">
+                        <button
+                          onClick={() => handleEdit(volunteer)}
+                          className="transition-colors"
+                          style={{ color: 'var(--theme-link-text)' }}
+                          onMouseEnter={(e) => e.currentTarget.style.color = 'var(--theme-link-hover)'}
+                          onMouseLeave={(e) => e.currentTarget.style.color = 'var(--theme-link-text)'}
+                        >
+                          Szerkesztés
+                        </button>
+                        <button
+                          onClick={() => handleDeleteClick(volunteer)}
+                          disabled={deleting}
+                          className="transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          style={{ color: deleting ? 'var(--theme-text-tertiary)' : 'var(--theme-error)' }}
+                          onMouseEnter={(e) => {
+                            if (!deleting) e.currentTarget.style.opacity = '0.7';
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!deleting) e.currentTarget.style.opacity = '1';
+                          }}
+                          title="Önkéntes törlése"
+                        >
+                          <svg
+                            className="w-5 h-5 inline-block"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                            />
+                          </svg>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -206,45 +276,59 @@ function UnknownDistricts() {
       {/* Szerkesztő Modal */}
       {editingVolunteer && (
         <div className="fixed inset-0 backdrop-blur-sm bg-white/30 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">
+          <div className="rounded-lg shadow-xl max-w-md w-full p-6" style={{ backgroundColor: 'var(--theme-card-bg)' }}>
+            <h2 className="text-xl font-bold mb-4" style={{ color: 'var(--theme-text-primary)' }}>
               Szavazókör hozzárendelése
             </h2>
 
             <div className="mb-4">
-              <p className="text-sm text-gray-600 mb-2">
+              <p className="text-sm mb-2" style={{ color: 'var(--theme-text-secondary)' }}>
                 <span className="font-medium">Név:</span> {editingVolunteer.name}
               </p>
-              <p className="text-sm text-gray-600 mb-2">
+              <p className="text-sm mb-2" style={{ color: 'var(--theme-text-secondary)' }}>
                 <span className="font-medium">Cím:</span> {editingVolunteer.address.fullAddress}
               </p>
             </div>
 
             <div className="space-y-4">
               <div>
-                <label htmlFor="oevk" className="block text-sm font-medium text-gray-700 mb-1">
-                  OEVK <span className="text-red-500">*</span>
+                <label htmlFor="oevk" className="block text-sm font-medium mb-1" style={{ color: 'var(--theme-text-secondary)' }}>
+                  OEVK <span style={{ color: 'var(--theme-error)' }}>*</span>
                 </label>
                 <input
                   type="text"
                   id="oevk"
                   value={editForm.oevk}
                   onChange={(e) => setEditForm({ ...editForm, oevk: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border rounded-md outline-none transition-colors"
+                  style={{
+                    backgroundColor: 'var(--theme-input-bg)',
+                    borderColor: 'var(--theme-input-border)',
+                    color: 'var(--theme-input-text)'
+                  }}
+                  onFocus={(e) => e.currentTarget.style.borderColor = 'var(--theme-input-focus)'}
+                  onBlur={(e) => e.currentTarget.style.borderColor = 'var(--theme-input-border)'}
                   placeholder="pl. 01"
                 />
               </div>
 
               <div>
-                <label htmlFor="votingStation" className="block text-sm font-medium text-gray-700 mb-1">
-                  Szavazókör <span className="text-red-500">*</span>
+                <label htmlFor="votingStation" className="block text-sm font-medium mb-1" style={{ color: 'var(--theme-text-secondary)' }}>
+                  Szavazókör <span style={{ color: 'var(--theme-error)' }}>*</span>
                 </label>
                 <input
                   type="text"
                   id="votingStation"
                   value={editForm.votingStation}
                   onChange={(e) => setEditForm({ ...editForm, votingStation: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border rounded-md outline-none transition-colors"
+                  style={{
+                    backgroundColor: 'var(--theme-input-bg)',
+                    borderColor: 'var(--theme-input-border)',
+                    color: 'var(--theme-input-text)'
+                  }}
+                  onFocus={(e) => e.currentTarget.style.borderColor = 'var(--theme-input-focus)'}
+                  onBlur={(e) => e.currentTarget.style.borderColor = 'var(--theme-input-border)'}
                   placeholder="pl. 001"
                 />
               </div>
@@ -254,18 +338,35 @@ function UnknownDistricts() {
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className={`flex-1 py-2 px-4 rounded-md font-medium text-white ${
-                  saving
-                    ? 'bg-gray-400 cursor-not-allowed'
-                    : 'bg-blue-600 hover:bg-blue-700'
-                }`}
+                className="flex-1 py-2 px-4 rounded-md font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{
+                  backgroundColor: saving ? 'var(--theme-btn-secondary-bg)' : 'var(--theme-btn-primary-bg)',
+                  color: saving ? 'var(--theme-btn-secondary-text)' : 'var(--theme-btn-primary-text)'
+                }}
+                onMouseEnter={(e) => {
+                  if (!saving) e.currentTarget.style.backgroundColor = 'var(--theme-btn-primary-hover)';
+                }}
+                onMouseLeave={(e) => {
+                  if (!saving) e.currentTarget.style.backgroundColor = 'var(--theme-btn-primary-bg)';
+                }}
               >
                 {saving ? 'Mentés...' : 'Mentés'}
               </button>
               <button
                 onClick={handleCancelEdit}
                 disabled={saving}
-                className="flex-1 py-2 px-4 border border-gray-300 rounded-md font-medium text-gray-700 hover:bg-gray-50"
+                className="flex-1 py-2 px-4 border rounded-md font-medium transition-colors"
+                style={{
+                  borderColor: 'var(--theme-border-primary)',
+                  color: 'var(--theme-text-secondary)',
+                  backgroundColor: 'var(--theme-bg-primary)'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--theme-bg-secondary)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--theme-bg-primary)';
+                }}
               >
                 Mégse
               </button>
@@ -282,6 +383,15 @@ function UnknownDistricts() {
           onClose={handleCloseNotes}
         />
       )}
+
+      {/* Delete Confirm Modal */}
+      <DeleteConfirmModal
+        isOpen={!!volunteerToDelete}
+        volunteerName={volunteerToDelete?.name || ''}
+        onConfirm={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+        isDeleting={deleting}
+      />
     </div>
   );
 }

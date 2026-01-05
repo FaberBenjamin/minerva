@@ -131,18 +131,28 @@ function NotesPanel({ volunteer, isOpen, onClose }: NotesPanelProps) {
 
       {/* Panel */}
       <div
-        className="fixed inset-y-0 right-0 w-full md:w-[480px] bg-white shadow-2xl z-50 flex flex-col animate-slide-in"
+        className="fixed inset-y-0 right-0 w-full md:w-[480px] shadow-2xl z-50 flex flex-col animate-slide-in"
+        style={{ backgroundColor: 'var(--theme-card-bg)' }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="bg-white border-b border-minerva-gray-200 px-6 py-4 flex items-center justify-between flex-shrink-0">
+        <div
+          className="border-b px-6 py-4 flex items-center justify-between flex-shrink-0"
+          style={{
+            backgroundColor: 'var(--theme-card-bg)',
+            borderColor: 'var(--theme-border-primary)'
+          }}
+        >
           <div>
-            <h2 className="text-xl font-bold text-minerva-gray-900">Jegyzetek</h2>
-            <p className="text-sm text-minerva-gray-600 mt-1">{volunteer.name}</p>
+            <h2 className="text-xl font-bold" style={{ color: 'var(--theme-text-primary)' }}>Jegyzetek</h2>
+            <p className="text-sm mt-1" style={{ color: 'var(--theme-text-secondary)' }}>{volunteer.name}</p>
           </div>
           <button
             onClick={onClose}
-            className="text-minerva-gray-500 hover:text-minerva-gray-900 transition-colors"
+            className="transition-colors"
+            style={{ color: 'var(--theme-text-tertiary)' }}
+            onMouseEnter={(e) => e.currentTarget.style.color = 'var(--theme-text-primary)'}
+            onMouseLeave={(e) => e.currentTarget.style.color = 'var(--theme-text-tertiary)'}
             title="Bezárás"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -160,16 +170,20 @@ function NotesPanel({ volunteer, isOpen, onClose }: NotesPanelProps) {
         <div className="flex-1 overflow-y-auto px-6 py-4">
           {loading ? (
             <div className="flex items-center justify-center h-32">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-minerva-gray-900" />
-              <p className="ml-3 text-minerva-gray-600">Jegyzetek betöltése...</p>
+              <div
+                className="animate-spin rounded-full h-8 w-8 border-b-2"
+                style={{ borderColor: 'var(--theme-text-primary)' }}
+              />
+              <p className="ml-3" style={{ color: 'var(--theme-text-secondary)' }}>Jegyzetek betöltése...</p>
             </div>
           ) : error ? (
             <div className="text-center py-8">
               <svg
-                className="w-12 h-12 mx-auto mb-2 text-red-500"
+                className="w-12 h-12 mx-auto mb-2"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
+                style={{ color: 'var(--theme-error)' }}
               >
                 <path
                   strokeLinecap="round"
@@ -178,16 +192,17 @@ function NotesPanel({ volunteer, isOpen, onClose }: NotesPanelProps) {
                   d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                 />
               </svg>
-              <p className="text-red-600">{error}</p>
+              <p style={{ color: 'var(--theme-error)' }}>{error}</p>
               <button
                 onClick={loadNotes}
-                className="mt-4 text-sm text-blue-600 hover:underline"
+                className="mt-4 text-sm hover:underline"
+                style={{ color: 'var(--theme-link-text)' }}
               >
                 Újrapróbálás
               </button>
             </div>
           ) : notes.length === 0 ? (
-            <div className="text-center py-12 text-minerva-gray-500">
+            <div className="text-center py-12" style={{ color: 'var(--theme-text-tertiary)' }}>
               <svg
                 className="w-16 h-16 mx-auto mb-3 opacity-30"
                 fill="none"
@@ -220,8 +235,14 @@ function NotesPanel({ volunteer, isOpen, onClose }: NotesPanelProps) {
         </div>
 
         {/* New Note Input */}
-        <div className="bg-white border-t border-minerva-gray-200 px-6 py-4 flex-shrink-0">
-          <label className="block text-sm font-medium text-minerva-gray-700 mb-2">
+        <div
+          className="border-t px-6 py-4 flex-shrink-0"
+          style={{
+            backgroundColor: 'var(--theme-card-bg)',
+            borderColor: 'var(--theme-border-primary)'
+          }}
+        >
+          <label className="block text-sm font-medium mb-2" style={{ color: 'var(--theme-text-secondary)' }}>
             Új jegyzet hozzáadása
           </label>
 
@@ -229,21 +250,31 @@ function NotesPanel({ volunteer, isOpen, onClose }: NotesPanelProps) {
             value={newNoteText}
             onChange={(e) => setNewNoteText(e.target.value)}
             placeholder="Írj egy megjegyzést az önkéntesről..."
-            className="w-full px-3 py-2 border border-minerva-gray-300 rounded-md focus:ring-2 focus:ring-minerva-gray-600 focus:border-transparent resize-none"
+            className="w-full px-3 py-2 border rounded-md outline-none resize-none transition-colors"
+            style={{
+              backgroundColor: 'var(--theme-input-bg)',
+              borderColor: 'var(--theme-input-border)',
+              color: 'var(--theme-input-text)'
+            }}
+            onFocus={(e) => e.currentTarget.style.borderColor = 'var(--theme-input-focus)'}
+            onBlur={(e) => e.currentTarget.style.borderColor = 'var(--theme-input-border)'}
             rows={4}
             maxLength={500}
             disabled={saving}
           />
 
           <div className="flex items-center justify-between mt-2">
-            <span className="text-xs text-minerva-gray-500">
+            <span className="text-xs" style={{ color: 'var(--theme-text-tertiary)' }}>
               {newNoteText.length}/500 karakter
             </span>
 
             <div className="flex gap-2">
               <button
                 onClick={onClose}
-                className="px-4 py-2 text-sm text-minerva-gray-700 hover:text-minerva-gray-900 transition-colors"
+                className="px-4 py-2 text-sm transition-colors"
+                style={{ color: 'var(--theme-text-secondary)' }}
+                onMouseEnter={(e) => e.currentTarget.style.color = 'var(--theme-text-primary)'}
+                onMouseLeave={(e) => e.currentTarget.style.color = 'var(--theme-text-secondary)'}
                 disabled={saving}
               >
                 Bezár
@@ -251,7 +282,17 @@ function NotesPanel({ volunteer, isOpen, onClose }: NotesPanelProps) {
               <button
                 onClick={handleSaveNote}
                 disabled={!newNoteText.trim() || saving}
-                className="px-4 py-2 text-sm bg-minerva-gray-900 text-white rounded-md hover:bg-minerva-gray-800 disabled:bg-minerva-gray-400 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                className="px-4 py-2 text-sm rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                style={{
+                  backgroundColor: saving || !newNoteText.trim() ? 'var(--theme-btn-secondary-bg)' : 'var(--theme-btn-primary-bg)',
+                  color: saving || !newNoteText.trim() ? 'var(--theme-btn-secondary-text)' : 'var(--theme-btn-primary-text)'
+                }}
+                onMouseEnter={(e) => {
+                  if (!saving && newNoteText.trim()) e.currentTarget.style.backgroundColor = 'var(--theme-btn-primary-hover)';
+                }}
+                onMouseLeave={(e) => {
+                  if (!saving && newNoteText.trim()) e.currentTarget.style.backgroundColor = 'var(--theme-btn-primary-bg)';
+                }}
               >
                 {saving ? (
                   <>
