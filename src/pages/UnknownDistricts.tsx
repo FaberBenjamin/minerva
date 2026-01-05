@@ -190,9 +190,6 @@ function UnknownDistricts() {
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--theme-text-secondary)' }}>
                     Cím
                   </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--theme-text-secondary)' }}>
-                    Jegyzetek
-                  </th>
                   <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--theme-text-secondary)' }}>
                     Műveletek
                   </th>
@@ -219,22 +216,33 @@ function UnknownDistricts() {
                     <td className="px-6 py-4 text-sm" style={{ color: 'var(--theme-text-secondary)' }}>
                       {volunteer.address.fullAddress}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center">
-                      <NotesButton
-                        notesCount={getNotesCount(volunteer)}
-                        onClick={() => handleOpenNotes(volunteer)}
-                      />
-                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex gap-3 justify-end">
+                      <div className="flex gap-3 justify-end items-center">
+                        <NotesButton
+                          notesCount={getNotesCount(volunteer)}
+                          onClick={() => handleOpenNotes(volunteer)}
+                        />
                         <button
                           onClick={() => handleEdit(volunteer)}
                           className="transition-colors"
                           style={{ color: 'var(--theme-link-text)' }}
                           onMouseEnter={(e) => e.currentTarget.style.color = 'var(--theme-link-hover)'}
                           onMouseLeave={(e) => e.currentTarget.style.color = 'var(--theme-link-text)'}
+                          title="Szerkesztés"
                         >
-                          Szerkesztés
+                          <svg
+                            className="w-5 h-5 inline-block"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                            />
+                          </svg>
                         </button>
                         <button
                           onClick={() => handleDeleteClick(volunteer)}

@@ -154,9 +154,6 @@ function VotingStationDetail() {
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--theme-text-secondary)' }}>
                     Cím
                   </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--theme-text-secondary)' }}>
-                    Jegyzetek
-                  </th>
                   <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--theme-text-secondary)' }}>
                     Műveletek
                   </th>
@@ -183,40 +180,40 @@ function VotingStationDetail() {
                     <td className="px-6 py-4 text-sm" style={{ color: 'var(--theme-text-secondary)' }}>
                       {volunteer.address.fullAddress}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center">
-                      <NotesButton
-                        notesCount={getNotesCount(volunteer)}
-                        onClick={() => handleOpenNotes(volunteer)}
-                      />
-                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <button
-                        onClick={() => handleDeleteClick(volunteer)}
-                        disabled={deleting}
-                        className="transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        style={{ color: deleting ? 'var(--theme-text-tertiary)' : 'var(--theme-error)' }}
-                        onMouseEnter={(e) => {
-                          if (!deleting) e.currentTarget.style.opacity = '0.7';
-                        }}
-                        onMouseLeave={(e) => {
-                          if (!deleting) e.currentTarget.style.opacity = '1';
-                        }}
-                        title="Önkéntes törlése"
-                      >
-                        <svg
-                          className="w-5 h-5 inline-block"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
+                      <div className="flex gap-3 justify-end items-center">
+                        <NotesButton
+                          notesCount={getNotesCount(volunteer)}
+                          onClick={() => handleOpenNotes(volunteer)}
+                        />
+                        <button
+                          onClick={() => handleDeleteClick(volunteer)}
+                          disabled={deleting}
+                          className="transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          style={{ color: deleting ? 'var(--theme-text-tertiary)' : 'var(--theme-error)' }}
+                          onMouseEnter={(e) => {
+                            if (!deleting) e.currentTarget.style.opacity = '0.7';
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!deleting) e.currentTarget.style.opacity = '1';
+                          }}
+                          title="Önkéntes törlése"
                         >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                          />
-                        </svg>
-                      </button>
+                          <svg
+                            className="w-5 h-5 inline-block"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                            />
+                          </svg>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
