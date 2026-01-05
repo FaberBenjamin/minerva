@@ -7,14 +7,14 @@ function NotesButton({ notesCount, onClick }: NotesButtonProps) {
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-1.5 transition-colors"
+      className="relative transition-colors"
       style={{ color: 'var(--theme-text-secondary)' }}
       onMouseEnter={(e) => e.currentTarget.style.color = 'var(--theme-text-primary)'}
       onMouseLeave={(e) => e.currentTarget.style.color = 'var(--theme-text-secondary)'}
       title={notesCount > 0 ? `Jegyzetek (${notesCount} db)` : 'Jegyzetek hozzáadása'}
     >
       <svg
-        className="w-4 h-4"
+        className="w-5 h-5"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -29,10 +29,11 @@ function NotesButton({ notesCount, onClick }: NotesButtonProps) {
       </svg>
       {notesCount > 0 && (
         <span
-          className="text-xs rounded-full px-2 py-0.5 font-medium"
+          className="absolute -top-1 -right-1 text-[8px] rounded-full min-w-[12px] h-3 flex items-center justify-center font-bold px-0.5 leading-none"
           style={{
-            backgroundColor: 'var(--theme-bg-secondary)',
-            color: 'var(--theme-text-primary)'
+            backgroundColor: 'var(--theme-btn-primary-bg)',
+            color: 'var(--theme-btn-primary-text)',
+            boxShadow: '0 0 0 2px var(--theme-card-bg)'
           }}
         >
           {notesCount}

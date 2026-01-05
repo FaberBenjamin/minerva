@@ -93,7 +93,7 @@ function DeleteConfirmModal({
           <button
             onClick={onConfirm}
             disabled={isDeleting}
-            className="flex-1 py-2 px-4 rounded-md font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex flex-1 items-center justify-center py-2 px-4 rounded-md font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             style={{
               backgroundColor: isDeleting ? 'var(--theme-btn-secondary-bg)' : 'var(--theme-error)',
               color: '#ffffff',

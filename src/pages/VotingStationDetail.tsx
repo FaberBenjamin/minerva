@@ -189,7 +189,7 @@ function VotingStationDetail() {
                         <button
                           onClick={() => handleDeleteClick(volunteer)}
                           disabled={deleting}
-                          className="transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="flex transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                           style={{ color: deleting ? 'var(--theme-text-tertiary)' : 'var(--theme-error)' }}
                           onMouseEnter={(e) => {
                             if (!deleting) e.currentTarget.style.opacity = '0.7';
