@@ -16,7 +16,7 @@
 
 @layer base {
   :root {
-    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-family: 'Montserrat', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 
     /* Light Theme (Default) */
     --theme-bg-primary: #ffffff;
