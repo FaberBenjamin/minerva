@@ -288,6 +288,16 @@ const Register = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
       <div className="w-full max-w-2xl">
         <div className="bg-white rounded-lg shadow-lg p-8">
+          {/* DEMO WARNING BANNER */}
+          <div className="mb-6 p-4 rounded-lg border-2 bg-red-600 border-red-800">
+            <p className="text-white text-center font-bold text-lg mb-1">
+              DEMO OLDAL - CSAK ILLUSZTRATÍV CÉLOKRA
+            </p>
+            <p className="text-white text-center text-sm font-medium">
+              NE adj meg valós személyes adatokat! Ez egy demonstrációs felület.
+            </p>
+          </div>
+
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gray-800 mb-2">Önkéntes Regisztráció</h1>
             <p className="text-gray-600">Köszönjük, hogy csatlakozol hozzánk!</p>

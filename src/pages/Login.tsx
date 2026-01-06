@@ -45,6 +45,19 @@ function Login() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: 'var(--theme-bg-secondary)' }}>
       <div className="max-w-md w-full rounded-lg shadow-lg p-8" style={{ backgroundColor: 'var(--theme-card-bg)' }}>
+        {/* DEMO WARNING BANNER */}
+        <div className="mb-6 p-4 rounded-lg border-2" style={{
+          backgroundColor: '#dc2626',
+          borderColor: '#991b1b',
+        }}>
+          <p className="text-white text-center font-bold text-lg mb-1">
+            DEMO OLDAL - CSAK ILLUSZTRATÍV CÉLOKRA
+          </p>
+          <p className="text-white text-center text-sm font-medium">
+            NE adj meg valós személyes adatokat!
+          </p>
+        </div>
+
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
             <Logo size="xl" />
